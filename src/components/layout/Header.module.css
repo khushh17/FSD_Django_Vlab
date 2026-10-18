@@ -1,0 +1,85 @@
+/*
+ * The reference marks its header sticky-top, but its .vlabs-page wrapper (overflow-y: auto)
+ * stops it sticking, so the header scrolls away with the page. Same behaviour here.
+ */
+.header {
+  position: relative;
+  z-index: 1020;
+  background: #fff;
+  font-family: var(--font-content);
+}
+
+.bar {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: stretch;
+  background: #fff;
+}
+
+/* Bootstrap .navbar-toggler with .px-4, stretched to the full bar height */
+.toggler {
+  flex-shrink: 0;
+  width: var(--toggler-w);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 0;
+  background: transparent;
+  border: 1px solid var(--toggler-border);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.togglerIcon {
+  width: 30px;
+  height: 30px;
+  stroke: var(--toggler-icon);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-miterlimit: 10;
+  fill: none;
+}
+
+.brands {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  padding: var(--header-pad-top) 32px var(--header-pad-bottom);
+}
+
+.brand {
+  display: block;
+  line-height: 0;
+}
+
+.somaiya {
+  height: var(--logo-h);
+  width: auto;
+}
+
+.right {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  border-top: 1px solid var(--header-divider);
+}
+
+.rating {
+  margin-right: 40px;
+}
+
+@media (max-width: 767.98px) {
+  .brands {
+    gap: 12px;
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .right {
+    display: none;
+  }
+}

@@ -1,0 +1,44 @@
+/* .breadcrumbs from the reference: Open Sans 1.6rem, #337ab7, .py-4 .px-4 inside a -15px row */
+.subheader {
+  padding: 24px 24px 24px 9px;
+  font-family: var(--font-nav);
+  font-size: var(--fs-crumb);
+  line-height: 1.5;
+  color: var(--blue-crumb);
+}
+
+/* Inline flow so a long trail wraps like text, with each chevron after its item. */
+.crumbs {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  display: inline;
+}
+
+.item a,
+.item a:hover {
+  color: var(--blue-crumb);
+}
+
+/* fa-angle-right at the breadcrumb size, .mx-2 */
+.sep {
+  display: inline-block;
+  vertical-align: -0.02em;
+  margin: 0 8px;
+  width: 0.43em;
+  height: 0.74em;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+@media (max-width: 767.98px) {
+  .subheader {
+    padding: 16px;
+  }
+}

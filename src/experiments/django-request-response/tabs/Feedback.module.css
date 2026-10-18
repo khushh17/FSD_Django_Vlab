@@ -1,0 +1,33 @@
+/* h3.page-name on the reference: the global .lab-content h2 style, coloured #337ab7 */
+.heading {
+  margin-top: 24px;
+}
+
+.action {
+  margin: 45px 0 44px;
+}
+
+/* #feedback-btn: Bootstrap .btn.btn-lg with the reference's outline colours */
+.button {
+  display: inline-block;
+  padding: 8px 16px;
+  font-family: var(--font-content);
+  font-size: 20px;
+  line-height: 1.5;
+  color: var(--blue-outline);
+  background: transparent;
+  border: 1px solid var(--blue-outline);
+  border-radius: 4.8px;
+  cursor: pointer;
+}
+
+.button:hover {
+  color: var(--blue-outline);
+  text-decoration: none;
+}
+
+.form {
+  max-width: 640px;
+  margin: 32px 0;
+  text-align: left;
+}

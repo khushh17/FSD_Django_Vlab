@@ -1,0 +1,101 @@
+/* Shared form parts for the sign-in, feedback and bug report forms */
+.text {
+  margin: 0 0 12px;
+  line-height: 1.5;
+}
+
+.muted {
+  margin: 0 0 12px;
+  font-size: 0.9rem;
+  color: #586069;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 12px;
+  font-weight: 700;
+}
+
+.field input,
+.field textarea,
+.field select {
+  padding: 6px 8px;
+  border: 1px solid #808080;
+  border-radius: 4px;
+  font: inherit;
+  font-weight: 400;
+  background: #fff;
+}
+
+.field textarea {
+  min-height: 7em;
+  resize: vertical;
+}
+
+.hint {
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: #586069;
+}
+
+.buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+/* The Rate Me popup's buttons */
+.primary,
+.secondary {
+  border: none;
+  color: #fff;
+  background-color: var(--btn-blue);
+  font-family: inherit;
+  font-size: var(--fs-button);
+  border-radius: 1em;
+  padding: 0.6em 1.2em;
+  cursor: pointer;
+}
+
+.primary:hover:not(:disabled) {
+  background-color: var(--btn-hover);
+}
+
+.secondary {
+  background-color: #747474;
+}
+
+.secondary:hover:not(:disabled) {
+  background-color: #666;
+}
+
+.primary:disabled,
+.secondary:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.error {
+  margin: 0 0 12px;
+  color: #c82333;
+}
+
+.success {
+  margin: 0 0 12px;
+  color: #1e7e34;
+  font-weight: 700;
+}
+
+.divider {
+  margin: 16px 0;
+  border: none;
+  border-top: 1px solid #dfe2e5;
+}
+
+.googleSlot {
+  min-height: 44px;
+  margin-bottom: 12px;
+}

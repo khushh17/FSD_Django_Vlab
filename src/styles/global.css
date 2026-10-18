@@ -1,0 +1,240 @@
+/*
+ * Design tokens. Values are taken from the reference Virtual Labs site
+ * (vlabs-style.css, Bootstrap 4 defaults and computed styles), checked
+ * against reference/screenshots/.
+ */
+:root {
+  /* Brand */
+  --orange: #ff6600;              /* accent bar under header, active sidebar tab */
+  --blue-crumb: #337ab7;          /* breadcrumb */
+  --blue-title: #2c99ce;          /* experiment title, h1-h3, outline button */
+  /*
+   * Text and button colours below are the reference values darkened just enough to meet
+   * WCAG AA contrast (reference value in brackets). The orange bar keeps #ff6600.
+   */
+  --btn-blue: #237bae;            /* v-buttons, white text 4.65:1 (#288ec8) */
+  --btn-hover: #757575;           /* v-button hover and disabled (#a9a9a9) */
+  --blue-outline: #247da8;        /* outline button, small blue headings 4.59:1 (#2c99ce) */
+  --link: #0071eb;                /* links (Bootstrap #007bff) */
+  --link-hover: #0056b3;
+
+  /* Sidebar */
+  --sidebar-inactive: #3e6389;
+  --sidebar-active: #f56200;      /* large bold text 3.17:1 (#ff6600) */
+  --sidebar-border: #e8e8e8;
+
+  /* Text and rules */
+  --text: #000000;                /* page content */
+  --text-base: #212529;           /* Bootstrap body default */
+  --rule: #eaecef;                /* line under the experiment title */
+  --toggler-border: rgba(0, 0, 0, 0.1);
+  --toggler-icon: rgba(0, 0, 0, 0.5);
+  --header-divider: #dee2e6;
+
+  /* Rating */
+  --star: #ffd401;
+  --star-outline: #ffb931;
+
+  /* Footer */
+  --footer-bg: #111111;
+  --footer-bar: #212121;
+  --footer-text: #f8f9fa;
+  --footer-accent: #3ec1d5;
+  --footer-rule: #555555;
+  --footer-link: #4da3ff;         /* licence links on #212121, 6.1:1 (#007bff) */
+  --footer-link-hover: #80bdff;
+
+  /* Overlay (mobile menu) */
+  --backdrop: rgba(0, 0, 0, 0.2);
+  --menu-shadow: 0 8px 14px 0 rgba(0, 0, 0, 0.2);
+
+  /* Type. The reference loads only weight 400 of each family, so bold text is browser-synthesised. */
+  --font-content: "Raleway", sans-serif;
+  --font-nav: "Open Sans", sans-serif;
+  --font-system: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial,
+    "Noto Sans", sans-serif;
+  --font-mono: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+
+  --fs-content: 1.2rem;           /* 19.2px */
+  --lh-content: 1.5;
+  --fs-crumb: 1.6rem;             /* 25.6px */
+  --fs-sidebar: 1.2rem;           /* 19.2px */
+  --fs-title: 1.8rem;             /* 28.8px */
+  --fs-footer: 14px;
+  --fs-button: 1.05rem;           /* 16.8px */
+
+  /* Layout */
+  --logo-h: 74px;                 /* visible logo height in the header */
+  --header-pad-top: 8px;
+  --header-pad-bottom: 11px;
+  --orange-bar: 8px;
+  --toggler-w: 80px;
+  --content-pad-x: 48px;
+  --sidebar-pad-x: 24px;
+}
+
+@media (max-width: 991.98px) {
+  :root {
+    --logo-h: 48px;
+  }
+}
+
+@media (max-width: 767.98px) {
+  :root {
+    --logo-h: 36px;
+    --toggler-w: 56px;
+    --content-pad-x: 16px;
+    --fs-crumb: 1.1rem;
+    --fs-title: 1.5rem;
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-system);
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--text-base);
+  background-color: #fff;
+}
+
+/* Bootstrap reboot, as on the reference */
+p {
+  margin-top: 0;
+  margin-bottom: 1rem;
+}
+
+a {
+  color: var(--link);
+  text-decoration: none;
+}
+
+a:hover {
+  color: var(--link-hover);
+  text-decoration: underline;
+}
+
+img {
+  vertical-align: middle;
+  border-style: none;
+}
+
+button {
+  font: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--btn-blue);
+  outline-offset: 2px;
+}
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+/*
+ * Tab content (.lab-content on <main>). Values follow the reference's
+ * .markdown-body + vlabs-style.css rules.
+ */
+
+/* Section heading: the reference's in-content h3.page-name (24px, 600, underlined, #337ab7) */
+.lab-content h2 {
+  margin: 24px 0 16px;
+  padding-top: 16px;
+  font-size: 1.25em;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--blue-crumb);
+  text-decoration: underline;
+  text-align: left;
+}
+
+/* Sub-heading: bold body-size text, as in the reference Theory tab */
+.lab-content h3 {
+  margin: 24px 0 8px;
+  font-size: 1em;
+  font-weight: 700;
+  line-height: var(--lh-content);
+  color: var(--text);
+  text-align: left;
+}
+
+.lab-content ul,
+.lab-content ol {
+  margin: 0 0 16px;
+  padding-left: 2em;
+}
+
+.lab-content li + li {
+  margin-top: 0.25em;
+}
+
+.lab-content li > p {
+  margin-bottom: 0.5em;
+}
+
+.lab-content :not(pre) > code {
+  padding: 0.2em 0.4em;
+  font-family: var(--font-mono);
+  font-size: 85%;
+  background-color: rgba(27, 31, 35, 0.05);
+  border-radius: 6px;
+  overflow-wrap: anywhere;
+}
+
+.lab-content .table-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+  margin: 0 0 16px;
+}
+
+.lab-content table {
+  margin: 0;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.lab-content th,
+.lab-content td {
+  padding: 6px 13px;
+  border: 1px solid #dfe2e5;
+  vertical-align: top;
+}
+
+.lab-content th {
+  font-weight: 600;
+}
+
+.lab-content tr:nth-child(2n) {
+  background-color: #f6f8fa;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

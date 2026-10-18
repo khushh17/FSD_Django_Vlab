@@ -1,0 +1,27 @@
+.frame {
+  margin: 24px 0;
+  padding: 16px;
+  border: 1px solid #dfe2e5;
+  text-align: left;
+}
+
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  margin-bottom: 12px;
+}
+
+/* .frame .title outranks the global `.lab-content h3` sub-heading style */
+.frame .title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--blue-outline);
+}
+
+.stage {
+  container-type: inline-size;
+}

@@ -1,0 +1,16 @@
+/* github-markdown-css blockquote shape, with the site's title blue */
+.callout {
+  margin: 0 0 16px;
+  padding: 8px 16px;
+  border-left: 4px solid var(--blue-title);
+  background: #f6f8fa;
+}
+
+.title {
+  display: block;
+  color: var(--blue-title);
+}
+
+.callout > div > :last-child {
+  margin-bottom: 0;
+}

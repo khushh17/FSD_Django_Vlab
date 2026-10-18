@@ -1,0 +1,15 @@
+/* Reference: .text-center.fix-spacing > h2 inside .markdown-body */
+.wrap {
+  text-align: center;
+}
+
+.title {
+  margin: 24px 0 16px;
+  padding: 0 0 0.3em;
+  border-bottom: 1px solid var(--rule);
+  font-family: var(--font-content);
+  font-size: var(--fs-title);
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--blue-title);
+}

@@ -1,0 +1,59 @@
+/* Same look as the Rate Me popup (RateModal.module.css), left-aligned for forms */
+.dialog {
+  width: min(440px, calc(100vw - 32px));
+  padding: 0;
+  border: none;
+  max-height: calc(100dvh - 32px);
+  background: transparent;
+  overflow-y: auto; /* scrolls on short screens */
+  overscroll-behavior: contain;
+}
+
+.dialog::backdrop {
+  background-color: rgba(0, 0, 0, 0.4);
+}
+
+.content {
+  padding: 20px;
+  background-color: #fefefe;
+  border: 1px solid #888;
+  border-radius: 14px;
+  font-family: var(--font-content);
+  color: var(--text-base);
+  text-align: left;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 24px;
+  margin-bottom: 10px;
+}
+
+.logo {
+  height: 34px;
+  width: auto;
+}
+
+.close {
+  padding: 0;
+  border: none;
+  background: none;
+  color: #747474;
+  font-size: 28px;
+  font-weight: bold;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.close:hover,
+.close:focus-visible {
+  color: #000;
+}
+
+.title {
+  margin: 8px 0 12px;
+  font-size: 1.5rem;
+  font-weight: bold;
+}

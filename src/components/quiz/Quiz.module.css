@@ -1,0 +1,214 @@
+/*
+ * Layout follows the reference assessment page: .question (bold, 1.2rem) followed by
+ * .answers (a column of 1rem labels), then a Bootstrap "btn-primary" Submit Quiz button
+ * and the "N out of M" result. Right/wrong colours are darker than the reference's
+ * lightgreen/red so they stay readable on white, and every mark is also given in text.
+ */
+
+.quiz {
+  text-align: left;
+}
+
+/* Level picker */
+.picker {
+  min-width: 0;
+  margin: 8px 0 24px;
+  padding: 0;
+  border: none;
+}
+
+.pickerPrompt {
+  margin: 0 0 8px;
+  padding: 0;
+}
+
+.levels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+}
+
+.levelItem {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+/* .v-button from the reference */
+.levelButton {
+  border: 2px solid transparent;
+  color: #fff;
+  background-color: var(--btn-blue);
+  font-family: var(--font-content);
+  font-size: var(--fs-button);
+  line-height: 1.5;
+  border-radius: 1em;
+  padding: 0.5em 1.4em;
+  cursor: pointer;
+}
+
+.levelButton:hover {
+  background-color: var(--btn-hover);
+}
+
+/* Selected level: the site's orange "active" colour as a ring, so the white label stays readable */
+.levelActive,
+.levelActive:hover {
+  background-color: var(--btn-blue);
+  border-color: var(--orange);
+  outline: 2px solid var(--orange);
+  outline-offset: 1px;
+  font-weight: 700;
+}
+
+.lastScore {
+  font-size: 0.85rem;
+  color: #586069;
+}
+
+.top {
+  outline: none;
+}
+
+.attemptInfo {
+  margin: 0 0 8px;
+  font-size: 1rem;
+  color: #586069;
+}
+
+/* One question */
+.question {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+/* .question on the reference: Raleway 1.2rem, weight 900 */
+.legend {
+  float: left;
+  width: 100%;
+  margin: 0 0 4px;
+  padding: 0;
+  font-weight: 900;
+  line-height: 1.5;
+}
+
+.legend + * {
+  clear: both;
+}
+
+/* .answers on the reference: a 1rem column, labels 8px apart */
+.answers {
+  clear: both;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-bottom: 16px;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.option {
+  display: block;
+  margin-bottom: 8px;
+  cursor: pointer;
+}
+
+.option input {
+  margin: 0;
+  vertical-align: -1px;
+}
+
+.option input:disabled {
+  cursor: default;
+}
+
+.option:has(input:disabled) {
+  cursor: default;
+}
+
+.correct {
+  color: #1e7e34;
+}
+
+.wrong {
+  color: #c82333;
+}
+
+.note {
+  font-weight: 700;
+}
+
+/* Feedback after submit */
+.feedback {
+  margin: -4px 0 24px;
+  padding: 8px 16px;
+  border-left: 4px solid #dfe2e5;
+  background: #f6f8fa;
+  font-size: 1rem;
+}
+
+.feedback p {
+  margin: 0 0 8px;
+}
+
+.feedback p:last-child {
+  margin-bottom: 0;
+}
+
+.verdict {
+  font-weight: 700;
+}
+
+.source {
+  font-size: 0.875rem;
+  overflow-wrap: anywhere;
+}
+
+/* Links on the #f6f8fa feedback panel need a darker blue for 4.5:1 */
+.source a {
+  color: var(--link-hover);
+}
+
+/* Bootstrap .btn.btn-primary, as on the reference ("Submit Quiz") */
+.submitRow {
+  margin: 8px 0 24px;
+}
+
+.primaryButton {
+  display: inline-block;
+  padding: 6px 12px;
+  border: 1px solid var(--link);
+  border-radius: 4px;
+  background-color: var(--link); /* Bootstrap btn-primary #007bff, darkened for contrast */
+  color: #fff;
+  font-family: var(--font-content);
+  font-size: 1rem;
+  line-height: 1.5;
+  cursor: pointer;
+}
+
+.primaryButton:hover {
+  background-color: #0062cc;
+  border-color: #005cbf;
+}
+
+/* Result: "N out of M" */
+.result {
+  margin: 8px 0 24px;
+  outline: none;
+}
+
+.score {
+  margin: 0 0 4px;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.resultHint {
+  margin: 0 0 12px;
+  font-size: 1rem;
+  color: #586069;
+}

@@ -1,0 +1,115 @@
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.toggle input {
+  width: 1.1em;
+  height: 1.1em;
+  accent-color: var(--orange);
+}
+
+.status {
+  margin: 0 0 8px;
+  font-size: 1rem;
+}
+
+.scroller {
+  overflow-x: auto;
+}
+
+.svg {
+  display: block;
+  width: 100%;
+  min-width: 540px;
+  max-width: 600px;
+  height: auto;
+  margin: 0 auto;
+  font-family: var(--font-content);
+}
+
+.layer {
+  fill: #fff;
+  stroke: #808080;
+  stroke-width: 1;
+  transition: stroke 0.3s;
+}
+
+.layerAlt {
+  fill: #f6f8fa;
+}
+
+.active {
+  stroke: var(--orange);
+  stroke-width: 2.5;
+}
+
+.layerLabel {
+  font-size: 12px;
+  font-weight: 600;
+  fill: var(--sidebar-inactive);
+}
+
+.core {
+  fill: #fff;
+  stroke: #808080;
+  stroke-width: 1;
+  transition: fill 0.3s, stroke 0.3s;
+}
+
+.coreSkipped {
+  fill: #e9ecef;
+  stroke: #b0b8bf;
+  stroke-dasharray: 4 3;
+}
+
+.coreTitle {
+  font-size: 14px;
+  font-weight: 700;
+  fill: var(--blue-crumb);
+}
+
+.coreCode {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  fill: var(--text);
+}
+
+.dim {
+  fill: #6a6a6a;
+}
+
+.coreNote {
+  font-size: 12px;
+  font-style: italic;
+  fill: #6a737d;
+}
+
+.lane {
+  stroke: #b0b8bf;
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+}
+
+.laneLabel {
+  font-size: 12px;
+  fill: #586069;
+}
+
+.marker {
+  transition: transform 0.5s ease-in-out;
+}
+
+.markerDot {
+  fill: var(--orange);
+}
+
+.markerStatus {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  fill: var(--orange);
+}

@@ -1,0 +1,5 @@
+Django>=6.1,<6.2
+google-auth>=2.40
+requests>=2.32
+dj-database-url>=3.0
+psycopg[binary]>=3.2

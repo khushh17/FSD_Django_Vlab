@@ -1,0 +1,40 @@
+.pager {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-top: 40px;
+  padding-top: 16px;
+  border-top: 1px solid var(--rule);
+  text-align: left;
+}
+
+/* .v-button from the reference */
+.link,
+.link:hover {
+  display: inline-block;
+  padding: 0.6em 1.2em;
+  border-radius: 1em;
+  background-color: var(--btn-blue);
+  color: #fff;
+  font-family: var(--font-content);
+  font-size: var(--fs-button);
+  line-height: 1.5;
+  text-decoration: none;
+}
+
+.link:hover {
+  background-color: var(--btn-hover);
+}
+
+.next {
+  margin-left: auto;
+}
+
+@media (max-width: 767.98px) {
+  .link,
+  .link:hover {
+    font-size: 0.95rem;
+  }
+}

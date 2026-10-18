@@ -1,0 +1,36 @@
+.bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+  padding: 0 24px;
+  font-family: var(--font-content);
+  font-size: 0.95rem;
+  color: var(--text);
+}
+
+.label {
+  overflow-wrap: anywhere;
+}
+
+/* Outline button in the site's link blue (as the Feedback tab's button) */
+.button {
+  padding: 4px 12px;
+  border: 1px solid var(--blue-outline);
+  border-radius: 4px;
+  background: #fff;
+  color: var(--blue-outline);
+  font: inherit;
+  cursor: pointer;
+}
+
+.button:hover {
+  background: var(--blue-outline);
+  color: #fff;
+}
+
+@media (max-width: 767.98px) {
+  .bar {
+    padding: 0 16px 12px;
+  }
+}

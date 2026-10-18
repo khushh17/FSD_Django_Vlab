@@ -1,0 +1,19 @@
+.list {
+  text-align: left;
+}
+
+.list li + li {
+  margin-top: 16px;
+}
+
+/* The reference lists plain black URLs; kept black here, underlined so they read as links. */
+.url,
+.url:hover {
+  color: var(--text);
+  text-decoration: underline;
+  overflow-wrap: anywhere;
+}
+
+.url:hover {
+  color: var(--blue-crumb);
+}

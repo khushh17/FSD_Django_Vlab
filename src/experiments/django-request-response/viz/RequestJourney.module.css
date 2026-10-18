@@ -1,0 +1,125 @@
+.status {
+  margin: 0 0 4px;
+  font-size: 1rem;
+}
+
+/* Room above (request lane) and below (response lane) the boxes for the marker */
+.lanes {
+  position: relative;
+  padding: 26px 0;
+}
+
+/* .lanes prefix outranks the global .lab-content list styles */
+.lanes .pipeline {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pipeline .column {
+  margin: 0;
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* 1px connector between neighbouring columns */
+.column + .column::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: -18px;
+  width: 18px;
+  border-top: 1px solid #808080;
+}
+
+/* The Model / DB + Template column holds the longest names */
+.pipeline .group {
+  flex-grow: 1.5;
+}
+
+.box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 64px;
+  padding: 6px 4px;
+  border: 1px solid #808080;
+  background: #fff;
+  text-align: center;
+  line-height: 1.25;
+  transition: border-color 0.3s;
+}
+
+.active {
+  border-color: var(--orange);
+  outline: 1px solid var(--orange);
+}
+
+.label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--blue-crumb);
+}
+
+.detail {
+  margin-top: 2px;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: #586069;
+  overflow-wrap: break-word;
+}
+
+.marker {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--orange);
+  visibility: hidden;
+}
+
+.marker[data-placed] {
+  visibility: visible;
+  transition: transform 0.5s ease-in-out;
+}
+
+/* Narrow column: stack the pipeline vertically. Marker moves on the left (in) and right (out). */
+@container (max-width: 700px) {
+  .lanes {
+    padding: 0 30px;
+  }
+
+  .lanes .pipeline {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+  }
+
+  .pipeline .column {
+    flex-direction: row;
+  }
+
+  .column > .box {
+    flex: 1 1 0;
+    min-height: 44px;
+  }
+
+  .column + .column::before {
+    top: -14px;
+    left: 50%;
+    width: 0;
+    height: 14px;
+    border-top: none;
+    border-left: 1px solid #808080;
+  }
+}

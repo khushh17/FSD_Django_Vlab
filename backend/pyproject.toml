@@ -1,0 +1,20 @@
+# Used by Vercel to deploy this folder (Root Directory: backend). Keep `dependencies` the
+# same as requirements.txt (a test checks this); locally, install with requirements.txt.
+[project]
+name = "vlab-backend"
+version = "1.0.0"
+requires-python = ">=3.12"
+dependencies = [
+    "Django>=6.1,<6.2",
+    "google-auth>=2.40",
+    "requests>=2.32",
+    "dj-database-url>=3.0",
+    "psycopg[binary]>=3.2",
+]
+
+[tool.vercel]
+entrypoint = "config.wsgi:application"
+
+[tool.vercel.scripts]
+# Runs on Vercel after dependencies are installed (collectstatic runs automatically).
+build = "python vercel_build.py"

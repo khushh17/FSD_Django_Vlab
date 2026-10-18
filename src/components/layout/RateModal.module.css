@@ -1,0 +1,141 @@
+/* From the reference rating-submit widget (shadow DOM styles) */
+.dialog {
+  padding: 0;
+  border: none;
+  background: transparent;
+  overflow: visible;
+}
+
+.dialog::backdrop {
+  background-color: rgba(0, 0, 0, 0.4);
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+  background-color: #fefefe;
+  border: 1px solid #888;
+  border-radius: 14px;
+  font-family: Arial, Helvetica, sans-serif;
+  color: var(--text-base);
+}
+
+.header {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 24px;
+  margin-bottom: 10px;
+}
+
+.logo {
+  height: 34px;
+  width: auto;
+}
+
+.close {
+  padding: 0;
+  border: none;
+  background: none;
+  color: #747474;
+  font-size: 28px;
+  font-weight: bold;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.close:hover,
+.close:focus-visible {
+  color: #000;
+}
+
+.title {
+  margin: 1rem 0 0;
+  font-size: 2em;
+  font-weight: bold;
+}
+
+.stars {
+  display: flex;
+  justify-content: center;
+  margin: 20px;
+  padding: 0;
+  border: none;
+}
+
+.star {
+  position: relative;
+  width: 30px;
+  height: 30px;
+  font-family: Verdana, sans-serif;
+  font-size: 30px;
+  line-height: 26px;
+  color: #c88100; /* reference "orange", darkened to 3:1 for a control */
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.star:hover {
+  color: #a86c00;
+}
+
+.radio {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+}
+
+.star:has(.radio:focus-visible) {
+  outline: 2px solid var(--btn-blue);
+  outline-offset: 2px;
+}
+
+.buttons {
+  display: flex;
+}
+
+.submit,
+.cancel {
+  border: none;
+  color: #fff;
+  background-color: var(--btn-blue);
+  text-align: center;
+  font-family: inherit;
+  font-size: var(--fs-button);
+  border-radius: 1em;
+  padding: 0.6em 1.2em;
+  cursor: pointer;
+}
+
+.submit {
+  margin-right: 1rem;
+}
+
+.submit:hover {
+  background-color: var(--btn-hover);
+}
+
+.cancel {
+  background-color: #747474; /* reference grey (#808080), darkened for contrast */
+}
+
+.cancel:hover {
+  background-color: #666;
+}
+
+.error {
+  max-width: 260px;
+  margin: 0 0 12px;
+  color: #c82333;
+  text-align: center;
+}
+
+.submit:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}

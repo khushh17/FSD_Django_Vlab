@@ -1,0 +1,28 @@
+.figure {
+  margin: 0 0 16px;
+}
+
+.title {
+  margin-bottom: 4px;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: #586069;
+  text-align: left;
+}
+
+/* github-markdown-css <pre>, which the reference pages load */
+.pre {
+  margin: 0;
+  padding: 16px;
+  overflow: auto;
+  font-family: var(--font-mono);
+  font-size: 85%;
+  line-height: 1.45;
+  border-radius: 6px;
+  text-align: left;
+  tab-size: 4;
+}
+
+.pre code {
+  font-family: inherit;
+}

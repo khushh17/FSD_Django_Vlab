@@ -1,0 +1,45 @@
+.inline {
+  display: flex;
+  align-items: center;
+}
+
+.stacked {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+/* .v-button from the reference vlabs-style.css */
+.vButton {
+  display: inline-block;
+  border: none;
+  color: #fff;
+  background-color: var(--btn-blue);
+  text-align: center;
+  font-size: var(--fs-button);
+  line-height: 1.5;
+  border-radius: 1em;
+  padding: 0.6em 1.2em;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.vButton:hover {
+  color: #fff;
+  background-color: var(--btn-hover);
+  text-decoration: none;
+}
+
+/* The reference renders "Rate Me" in Arial (its widget sets no font) and "Report a Bug" in Raleway. */
+.rate {
+  font-family: Arial, sans-serif;
+}
+
+.bug {
+  font-family: var(--font-content);
+}
+
+.inline .bug {
+  margin: 0 10px;
+}

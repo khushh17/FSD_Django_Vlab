@@ -1,0 +1,15 @@
+.note {
+  margin: 8px 0;
+  font-size: 0.9rem;
+  color: #586069;
+}
+
+.link {
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--link);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}

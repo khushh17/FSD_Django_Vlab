@@ -1,0 +1,7 @@
+/* The two simulation flowcharts side by side when there is room, stacked otherwise */
+.flows {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 32px;
+  margin: 16px 0 24px;
+}

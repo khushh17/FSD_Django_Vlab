@@ -1,0 +1,43 @@
+/* .sidebar.nav-menu.px-lg-4 from the reference */
+.sidebar {
+  flex-shrink: 0;
+  padding: 0 var(--sidebar-pad-x);
+  border-right: 1px solid var(--sidebar-border);
+  font-family: var(--font-nav);
+  font-size: var(--fs-sidebar);
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.sidebar[hidden] {
+  display: none;
+}
+
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* a.p-2 */
+.link {
+  display: inline-block;
+  padding: 8px;
+  color: var(--sidebar-inactive);
+}
+
+.link:hover {
+  color: var(--sidebar-inactive);
+  text-decoration: underline;
+}
+
+.active,
+.active:hover {
+  color: var(--sidebar-active);
+}
+
+@media (max-width: 767.98px) {
+  .sidebar {
+    display: none;
+  }
+}

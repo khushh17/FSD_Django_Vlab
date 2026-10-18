@@ -1,0 +1,37 @@
+.root[hidden] {
+  display: none;
+}
+
+/* Covers the page and the orange bar; the header bar sits above it (z-index 2). */
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  background: var(--backdrop);
+}
+
+/* .simulation-header .dropdown .nav-menu from the reference */
+.panel {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 3;
+  width: max-content;
+  max-width: calc(100vw - 32px);
+  max-height: calc(100vh - 120px);
+  overflow: auto;
+  padding: 10px 16px 16px;
+  background: #fff;
+  box-shadow: var(--menu-shadow);
+  font-family: var(--font-nav);
+  font-size: var(--fs-sidebar);
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.actions {
+  margin-top: 12px;
+  padding: 12px 8px 0;
+  border-top: 1px solid var(--sidebar-border);
+  font-weight: 400;
+}

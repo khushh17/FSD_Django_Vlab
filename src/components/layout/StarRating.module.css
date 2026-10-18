@@ -1,0 +1,21 @@
+.rating {
+  display: flex;
+  align-items: center;
+}
+
+.star {
+  width: 22px;
+  height: auto;
+  display: block;
+}
+
+.full {
+  fill: var(--star);
+}
+
+.outline {
+  fill: none;
+  stroke: var(--star-outline);
+  stroke-width: 1.2;
+  stroke-linejoin: round;
+}

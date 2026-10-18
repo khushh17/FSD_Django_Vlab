@@ -1,0 +1,26 @@
+/*
+ * Reference Contributors table: plain bordered cells, no zebra striping.
+ * Selectors are specific enough to outrank the global .lab-content table styles.
+ */
+.table tbody tr:nth-child(n) {
+  background: none;
+}
+
+.table thead th,
+.table tbody td {
+  padding: 10px 16px;
+  border: 1px solid #dee2e6;
+}
+
+.table thead th {
+  font-weight: 700;
+}
+
+.table tbody .sno {
+  text-align: center;
+}
+
+.todo {
+  color: #586069;
+  font-style: italic;
+}

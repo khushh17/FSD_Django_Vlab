@@ -1,0 +1,142 @@
+.path {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 24px;
+  margin: 0 0 12px;
+  font-size: 1rem;
+}
+
+.consumed {
+  color: #6a6a6a;
+  text-decoration: line-through;
+}
+
+.remaining {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 16px;
+  align-items: start;
+}
+
+.files {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.file,
+.result {
+  border: 1px solid #808080;
+}
+
+.fileHead {
+  padding: 6px 10px;
+  border-bottom: 1px solid #808080;
+  background: #eeeeee;
+  font-size: 0.9rem;
+}
+
+.note {
+  color: #586069;
+}
+
+/* .file prefix outranks the global .lab-content list and code styles */
+.file .patterns {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.patterns .pattern {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 12px;
+  margin: 4px;
+  padding: 6px 8px;
+  border: 1px solid transparent;
+  transition: border-color 0.3s;
+}
+
+.patterns .testing {
+  border-color: var(--orange);
+  outline: 1px solid var(--orange);
+}
+
+.pattern .code {
+  padding: 0;
+  background: none;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  overflow-wrap: anywhere;
+}
+
+.tag {
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.untested {
+  color: #6a737d;
+}
+
+.no-match {
+  color: #586069;
+}
+
+.prefix,
+.match {
+  color: var(--blue-outline);
+  font-weight: 700;
+}
+
+.never {
+  color: #586069;
+  font-style: italic;
+}
+
+.resolved {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 6px 12px;
+  margin: 0;
+  padding: 10px;
+  font-size: 0.9rem;
+}
+
+.resolved dt {
+  font-weight: 600;
+  color: var(--blue-crumb);
+}
+
+.resolved dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.result .resolved code {
+  padding: 0;
+  background: none;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+}
+
+.pending {
+  margin: 0;
+  padding: 10px;
+  font-size: 0.9rem;
+  color: #586069;
+}
+
+@container (max-width: 700px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

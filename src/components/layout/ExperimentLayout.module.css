@@ -1,0 +1,57 @@
+/* .vlabs-page */
+.page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow-x: clip;
+}
+
+.skip {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1030;
+  padding: 8px 16px;
+  background: #fff;
+  color: var(--blue-crumb);
+  transform: translateY(-120%);
+}
+
+.skip:focus {
+  transform: none;
+}
+
+.body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Breadcrumb on the left, sign-in status on the right (below it on narrow screens) */
+.topRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.row {
+  flex: 1;
+  display: flex;
+}
+
+/* .vlabs-page-content.px-5.pb-4.markdown-body */
+.content {
+  flex: 1;
+  min-width: 0;
+  padding: 0 var(--content-pad-x) 24px;
+  font-family: var(--font-content);
+  font-size: var(--fs-content);
+  line-height: var(--lh-content);
+  color: var(--text);
+  text-align: justify;
+}
+
+.content:focus {
+  outline: none;
+}
