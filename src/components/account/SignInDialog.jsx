@@ -5,7 +5,10 @@ import Dialog from './Dialog.jsx'
 import GoogleButton from './GoogleButton.jsx'
 import styles from './forms.module.css'
 
-/** Sign in with Google, then (first time only) enter the roll number. */
+/**
+ * Sign in with roll number + class password, or with Google (then, the first time only,
+ * enter the roll number).
+ */
 export default function SignInDialog({ reason, onClose }) {
   const { status, student } = useAuth()
   const needsRoll = status === 'signed-in' && student && !student.rollNumber
@@ -16,8 +19,14 @@ export default function SignInDialog({ reason, onClose }) {
   )
 }
 
+const ROLL_HINT = '11 digits, for example 16010125804'
+
 function SignInStep({ reason }) {
-  const { signInWithGoogle, devSignIn } = useAuth()
+  const { rollSignIn, signInWithGoogle, devSignIn } = useAuth()
+  const ids = { roll: useId(), password: useId(), name: useId() }
+  const [roll, setRoll] = useState('')
+  const [password, setPassword] = useState('')
+  const [name, setName] = useState('')
   const [error, setError] = useState(null)
   const [busy, setBusy] = useState(false)
 
@@ -28,6 +37,7 @@ function SignInStep({ reason }) {
       await action()
     } catch (err) {
       setError(err.message)
+      setPassword('')
     } finally {
       setBusy(false)
     }
@@ -37,23 +47,74 @@ function SignInStep({ reason }) {
     <>
       {reason && <p className={styles.text}>{reason}</p>}
       <p className={styles.text}>
-        Use your <strong>@{EMAIL_DOMAIN}</strong> Google account. Your pretest and posttest scores and your simulation
-        runs are then saved to your record for your teacher.
+        Sign in so your pretest and posttest scores and your simulation runs are saved to your record for your teacher.
       </p>
-      {error && (
-        <p className={styles.error} role="alert">
-          {error}
-        </p>
-      )}
-      {GOOGLE_CLIENT_ID ? (
-        <div className={styles.googleSlot} aria-busy={busy}>
-          <GoogleButton onCredential={(credential) => attempt(() => signInWithGoogle(credential))} />
+      <form
+        onSubmit={(event) => {
+          event.preventDefault()
+          attempt(() => rollSignIn(roll.replace(/\s/g, ''), password, name.trim()))
+        }}
+        noValidate
+      >
+        <label className={styles.field} htmlFor={ids.roll}>
+          Roll number
+          <input
+            id={ids.roll}
+            inputMode="numeric"
+            autoComplete="username"
+            spellCheck={false}
+            maxLength={14}
+            required
+            value={roll}
+            onChange={(e) => setRoll(e.target.value)}
+            aria-describedby={`${ids.roll}-hint`}
+          />
+          <span id={`${ids.roll}-hint`} className={styles.hint}>
+            {ROLL_HINT}
+          </span>
+        </label>
+        <label className={styles.field} htmlFor={ids.password}>
+          Class password
+          <input
+            id={ids.password}
+            type="password"
+            autoComplete="current-password"
+            required
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            aria-describedby={`${ids.password}-hint`}
+          />
+          <span id={`${ids.password}-hint`} className={styles.hint}>
+            The password your teacher gave the class.
+          </span>
+        </label>
+        <label className={styles.field} htmlFor={ids.name}>
+          Your name (optional)
+          <input id={ids.name} autoComplete="name" maxLength={200} value={name} onChange={(e) => setName(e.target.value)} />
+        </label>
+        {error && (
+          <p className={styles.error} role="alert">
+            {error}
+          </p>
+        )}
+        <div className={styles.buttons}>
+          <button type="submit" className={styles.primary} disabled={busy || !roll.trim() || !password}>
+            {busy ? 'Signing in…' : 'Sign in'}
+          </button>
         </div>
-      ) : (
-        // TODO: set VITE_GOOGLE_CLIENT_ID once the Google OAuth client exists.
-        <p className={styles.muted}>Google sign-in is not set up yet.</p>
+      </form>
+      {GOOGLE_CLIENT_ID && (
+        <>
+          <hr className={styles.divider} />
+          <p className={styles.muted}>
+            Or use your <strong>@{EMAIL_DOMAIN}</strong> Google account:
+          </p>
+          <div className={styles.googleSlot} aria-busy={busy}>
+            <GoogleButton onCredential={(credential) => attempt(() => signInWithGoogle(credential))} />
+          </div>
+        </>
       )}
-      {DEV_LOGIN && <DevSignIn busy={busy} onSubmit={(email, name) => attempt(() => devSignIn(email, name))} />}
+      {DEV_LOGIN && <DevSignIn busy={busy} onSubmit={(email, devName) => attempt(() => devSignIn(email, devName))} />}
     </>
   )
 }
@@ -101,7 +162,7 @@ function RollNumberStep({ student, onClose }) {
     setBusy(true)
     setError(null)
     try {
-      await saveRollNumber(roll.trim())
+      await saveRollNumber(roll.replace(/\s/g, ''))
       onClose()
     } catch (err) {
       setError(err.message)
@@ -122,14 +183,15 @@ function RollNumberStep({ student, onClose }) {
           required
           autoComplete="off"
           spellCheck={false}
-          maxLength={20}
+          maxLength={14}
           value={roll}
-          onChange={(e) => setRoll(e.target.value.toUpperCase())}
+          inputMode="numeric"
+          onChange={(e) => setRoll(e.target.value)}
           aria-describedby={`${id}-hint`}
           aria-invalid={error ? true : undefined}
         />
         <span id={`${id}-hint`} className={styles.hint}>
-          Check it carefully: only the admin can change it later.
+          {ROLL_HINT}. Check it carefully: only the admin can change it later.
         </span>
       </label>
       {error && (

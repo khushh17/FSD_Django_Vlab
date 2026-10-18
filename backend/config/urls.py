@@ -8,6 +8,7 @@ admin.site.site_title = "Virtual Labs admin"
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    path("api/auth/roll", views.roll_sign_in),
     path("api/auth/google", views.google_sign_in),
     path("api/auth/dev", views.dev_sign_in),
     path("api/me", views.me),

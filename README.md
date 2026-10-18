@@ -131,8 +131,15 @@ Run these again after changing an engine, or after a new Django release.
 
 `backend/` is a Django project that stores what students do on the site: pretest and
 posttest attempts (with every answer), simulation runs (setup, prediction, outcome),
-ratings, feedback and bug reports. Students sign in with their Google account on the
-university domain and enter their roll number once.
+ratings, feedback and bug reports. Students sign in in one of two ways:
+
+- **Roll number + class password.** The roll number is 11 digits: `160`, a 3-digit branch
+  (101 = Computer Engineering), a 2-digit year and a 3-digit serial, for example
+  `16010125804`. Every student uses the same password, `STUDENT_SHARED_PASSWORD` in
+  `backend/.env` (empty switches this sign-in off).
+- **Google**, limited to `@somaiya.edu` accounts, once the OAuth client ID is set. The student
+  enters their roll number once; if that roll number already signed in with the password,
+  the Google account is joined to the same student and records.
 
 Without `VITE_API_URL` the site works exactly as before: no sign-in, nothing is sent.
 
@@ -195,7 +202,7 @@ To try the admin pages with realistic numbers (development only):
 backend\.venv\Scripts\python backend\manage.py seed_demo
 ```
 
-This adds 24 made-up students (roll numbers `DEMO001` to `DEMO024`) with attempts, runs,
+This adds 24 made-up students (roll numbers `16099999001` to `16099999024`, branch 999) with attempts, runs,
 ratings, feedback and a bug report. It also creates a local admin from `DEV_ADMIN_USERNAME`
 and `DEV_ADMIN_PASSWORD` in `backend/.env`, if they are set. `seed_demo --clear` removes the
 demo students again. It needs Node, which it uses to read the question banks
@@ -205,13 +212,15 @@ demo students again. It needs Node, which it uses to read the question banks
 
 | Endpoint | What it does |
 | --- | --- |
+| `POST /api/auth/roll` | Roll number + class password; creates the student on first sign-in |
 | `POST /api/auth/google` | Checks the Google ID token (`hd` must be the university domain); returns a sign-in token |
 | `POST /api/auth/dev` | Test sign-in (only with `DJANGO_DEBUG=1` and `DEV_LOGIN=1`) |
 | `GET /api/me` | The student and their ratings |
-| `POST /api/me/roll-number` | Saves the roll number (once; the admin can change it later) |
+| `POST /api/me/roll-number` | Google sign-ins: saves the roll number (once; the admin can change it later), or joins an existing roll-number student |
 | `POST /api/events` | Quiz attempts and simulation runs, up to 50 per request |
 | `POST /api/ratings`, `/api/feedback`, `/api/bug-reports` | The Rate Me, Feedback and Report a Bug forms |
-| `POST /api/admin/login`, `GET /api/admin/...` | Admin sign-in and the admin pages' data (`overview`, `students`, `students/<id>`, `quiz`, `simulation`, `feedback`, `bugs`); `POST /api/admin/bugs/<id>` marks a bug open or fixed |
+| `GET /api/ratings/summary?experiment=` | Public: the average rating shown in the header |
+| `POST /api/admin/login`, `GET /api/admin/...` | Admin sign-in and the admin pages' data (`overview`, `students`, `students/<id>`, `quiz`, `simulation`, `feedback`, `bugs`, `export`); `POST /api/admin/bugs/<id>` marks a bug open or fixed |
 
 Requests carry `Authorization: Bearer <token>`. The token expires after 7 days. Quiz
 attempts and simulation runs wait in the browser (`localStorage`) until the server accepts
@@ -229,8 +238,12 @@ backend\.venv\Scripts\python backend\manage.py test labs
 - Quiz answers are marked on the server with `backend/labs/question_keys.json`, so a score
   cannot be made up. The answers are still in the site's code (the quiz shows explanations
   after submitting), so a determined student could look them up before answering.
-- No rate limiting yet on the student endpoints. The admin lockout counts wrong passwords in Django's
-  cache, which on Vercel is per server instance, so it slows guessing but is not a hard limit.
+- With one class password, anyone who knows it can sign in as any roll number. That is fine
+  for a class, not for marks that matter; Google sign-in (one account per student) is the
+  stronger option once it is set up.
+- Rate limits (sign-in attempts, records, feedback, bug reports) and lockouts are counted in
+  Django's cache, which on Vercel is per server instance, so they slow abuse rather than
+  stop it completely.
 - Signing out does not cancel an issued token; it just expires after 7 days.
 
 ## Accessibility
@@ -250,9 +263,9 @@ items marked in it.
 
 | Item | Where / how |
 | --- | --- |
-| Create the Google OAuth client ID (free, no billing needed) and put it in `GOOGLE_CLIENT_ID` and `VITE_GOOGLE_CLIENT_ID` | Google Cloud Console; `backend/.env`, `.env.local`, later Vercel settings |
+| Choose the class password and put it in `STUDENT_SHARED_PASSWORD` (a random local test value is there now) | `backend/.env`, later Vercel settings |
+| Optional: create the Google OAuth client ID (free, no billing needed) and put it in `GOOGLE_CLIENT_ID` and `VITE_GOOGLE_CLIENT_ID`. Roll-number sign-in works without it | Google Cloud Console; `backend/.env`, `.env.local`, later Vercel settings |
 | Create the professor's admin account | On Vercel: the `DJANGO_SUPERUSER_*` variables (DEPLOY.md, step 2). Locally: `createsuperuser` |
-| Create the GitHub repository and push (needed for Vercel) | `git init`, then GitHub |
 | Remove the demo data before real use (local database only) | `backend\.venv\Scripts\python backend\manage.py seed_demo --clear` |
 
 ### Content (waiting on the professor)
@@ -260,7 +273,7 @@ items marked in it.
 | Item | Where |
 | --- | --- |
 | Developer names, emails and IDs (4 rows); Subject Matter Experts table | `data/contributors.js` |
-| Roll number format (now: 4–20 letters, digits, `/` or `-`) | `backend/labs/models.py` |
+| Branch code names for the admin pages (only 101 = Computer Engineering known) | `backend/labs/models.py` |
 | Google Form URL for the Feedback tab (optional now that feedback is built in), and the sign-off name | `src/config/site.js` |
 | Breadcrumb links (Computer Science and Engineering, Python, Django) | `meta.js` |
 | Diagrams: Figure 1 is in (`cycle-overview.gif`), its source and author still needed; Figures 2–4 still needed (`middleware-onion.png`, `middleware-hooks-flow.png`, `url-resolution.png`) | `public/diagrams/`, `tabs/Theory.jsx` |
@@ -275,12 +288,12 @@ items marked in it.
 | --- | --- |
 | Follow [DEPLOY.md](DEPLOY.md): two Vercel projects (site, and `backend/`), Neon Postgres, environment variables | The config files are written; migrations and the admin account run in the backend's build |
 | Add the Vercel site address to the Google OAuth client's allowed origins | Google Cloud Console |
-| First live test: Google sign-in has only been tested with the local test sign-in so far | DEPLOY.md, step 5 |
+| First live test: roll-number sign-in, records and the admin pages on the live site; Google sign-in once its ID is set | DEPLOY.md, step 5 |
 
 ### Later features (phase 4 and after)
 
 | Item | Notes |
 | --- | --- |
 | Landing page listing every experiment; merge other students' experiments | `src/experiments/registry.js`, `LAB_EXPERIMENTS` in `backend/config/settings.py` |
-| Rate limiting on student endpoints; a shared store for the admin lockout | See Known limits |
+| A shared store (for example Redis) for rate limits, if they ever need to be strict | See Known limits |
 | Students list currently shows every signed-in student, also those from other experiments | Filter by class or experiment once there are several |

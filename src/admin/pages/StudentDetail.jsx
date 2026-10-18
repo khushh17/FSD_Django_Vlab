@@ -28,7 +28,7 @@ export default function StudentDetail() {
           <Stats
             items={[
               { label: 'Name', value: data.student.name || '—' },
-              { label: 'Email', value: data.student.email },
+              { label: 'Email', value: data.student.email ?? '— (roll-number sign-in)' },
               { label: 'First signed in', value: when(data.student.createdAt) },
               { label: 'Last seen', value: when(data.student.lastSeen) },
               { label: 'Rating', value: data.rating ?? '—' },

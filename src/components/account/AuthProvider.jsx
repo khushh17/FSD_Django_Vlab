@@ -65,8 +65,9 @@ export function AuthProvider({ children }) {
   }, [token, store, forget])
 
   useEffect(() => {
-    setOutboxSession({ token, owner: student?.email ?? null, ready, onUnauthorized: forget })
-  }, [token, student?.email, ready, forget])
+    // Records belong to the roll number they were made under.
+    setOutboxSession({ token, owner: student?.rollNumber ?? null, ready, onUnauthorized: forget })
+  }, [token, student?.rollNumber, ready, forget])
 
   const signIn = useCallback(
     async (path, body) => {
@@ -84,12 +85,15 @@ export function AuthProvider({ children }) {
       ready,
       ratings,
       requestSignIn: (reason = null) => setDialog({ reason }),
+      rollSignIn: (rollNumber, password, name) =>
+        signIn('/api/auth/roll', { roll_number: rollNumber, password, name }),
       signInWithGoogle: (credential) => signIn('/api/auth/google', { credential }),
       devSignIn: (email, name) => signIn('/api/auth/dev', { email, name }),
       signOut,
       async saveRollNumber(rollNumber) {
+        // A new token: the Google account may have been joined to an existing roll-number student.
         const result = await apiFetch('/api/me/roll-number', { method: 'POST', token, body: { roll_number: rollNumber } })
-        store({ token, student: result.student })
+        store(result)
       },
       async rate(experiment, stars) {
         await apiFetch('/api/ratings', { method: 'POST', token, body: { experiment, stars } })

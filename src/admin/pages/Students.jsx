@@ -25,7 +25,7 @@ export default function Students() {
     return data.students
       .filter((s) => !onlyActive || Object.keys(s.quizzes).length > 0 || s.simulationRuns > 0)
       .filter((s) => !needle || [s.rollNumber, s.name, s.email].some((v) => v?.toLowerCase().includes(needle)))
-      .sort((a, b) => (a.rollNumber ?? '￿').localeCompare(b.rollNumber ?? '￿') || a.email.localeCompare(b.email))
+      .sort((a, b) => (a.rollNumber ?? '￿').localeCompare(b.rollNumber ?? '￿') || (a.email ?? '').localeCompare(b.email ?? ''))
   }, [data, search, onlyActive])
 
   return (
@@ -71,7 +71,7 @@ export default function Students() {
                   </th>
                   <td>
                     {s.name || '—'}
-                    <span className={styles.cellNote}>{s.email}</span>
+                    {s.email && <span className={styles.cellNote}>{s.email}</span>}
                   </td>
                   {quizColumns.map((c) => {
                     const q = s.quizzes[c.key]

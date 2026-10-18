@@ -17,6 +17,13 @@ def claims(**overrides):
 
 
 class ApiTestCase(TestCase):
+    def _pre_setup(self):
+        # Rate limits and lockouts are counted in the cache: start every test from zero.
+        from django.core.cache import cache
+
+        cache.clear()
+        super()._pre_setup()
+
     def post(self, url, data, token=None, **headers):
         if token:
             headers["HTTP_AUTHORIZATION"] = f"Bearer {token}"
@@ -109,6 +116,83 @@ class DevSignInTests(ApiTestCase):
         self.assertEqual(response.json()["student"]["email"], "test@somaiya.edu")
 
 
+@override_settings(STUDENT_SHARED_PASSWORD="class-password")
+class RollSignInTests(ApiTestCase):
+    def sign_in(self, roll="16010125804", password="class-password", **extra):
+        return self.post("/api/auth/roll", {"roll_number": roll, "password": password, **extra})
+
+    def test_first_sign_in_creates_the_student(self):
+        response = self.sign_in(name="Asha")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["student"], {"email": None, "name": "Asha", "rollNumber": "16010125804"})
+        me = self.get("/api/me", response.json()["token"]).json()
+        self.assertEqual(me["student"]["rollNumber"], "16010125804")
+
+    def test_signing_in_again_is_the_same_student(self):
+        self.sign_in(name="Asha")
+        response = self.sign_in(roll="160 101 25 804", name="Someone else")  # spaces are ignored
+        self.assertEqual(response.json()["student"]["name"], "Asha")  # the first name stays
+        self.assertEqual(Student.objects.count(), 1)
+
+    def test_records_need_no_extra_step(self):
+        token = self.sign_in().json()["token"]
+        self.assertEqual(self.post("/api/events", {"events": [quiz_event()]}, token).status_code, 200)
+        self.assertEqual(QuizAttempt.objects.get().student.roll_number, "16010125804")
+
+    def test_wrong_password_and_lockout(self):
+        self.assertEqual(self.sign_in(password="nope").status_code, 401)
+        self.assertEqual(Student.objects.count(), 0)
+        for _ in range(9):
+            self.sign_in(password="nope")
+        self.assertEqual(self.sign_in().status_code, 429)
+
+    def test_invalid_roll_number(self):
+        for roll in ["12345", "26010125804", "1601012580", "abcdefghijk"]:
+            self.assertEqual(self.sign_in(roll=roll).status_code, 400, roll)
+
+    @override_settings(STUDENT_SHARED_PASSWORD="")
+    def test_off_without_a_class_password(self):
+        response = self.sign_in(password="anything")
+        self.assertEqual(response.status_code, 503)
+
+    def test_google_account_joins_the_roll_number_student(self):
+        roll_token = self.sign_in(name="Asha").json()["token"]
+        self.post("/api/events", {"events": [quiz_event()]}, roll_token)
+        self.post("/api/ratings", {"experiment": EXP, "stars": 3}, roll_token)
+        google = Student.objects.create(google_sub="g-1", email="asha@somaiya.edu", name="Asha P")
+        google_token = make_token(google)
+        self.post("/api/ratings", {"experiment": EXP, "stars": 5}, google_token)  # rated before the roll number
+        response = self.post("/api/me/roll-number", {"roll_number": "16010125804"}, google_token)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["student"], {"email": "asha@somaiya.edu", "name": "Asha", "rollNumber": "16010125804"})
+        self.assertEqual(Student.objects.count(), 1)
+        student = Student.objects.get()
+        self.assertEqual((student.google_sub, student.quizattempts.count()), ("g-1", 1))
+        self.assertEqual(Rating.objects.get().stars, 3)  # the roll-number student's own rating is kept
+        # The old Google-only token no longer works; the new one does.
+        self.assertEqual(self.get("/api/me", google_token).status_code, 401)
+        self.assertEqual(self.get("/api/me", response.json()["token"]).status_code, 200)
+
+    def test_two_google_accounts_cannot_share_a_roll_number(self):
+        self.sign_in()
+        first = Student.objects.create(google_sub="g-1", email="a@somaiya.edu")
+        self.post("/api/me/roll-number", {"roll_number": "16010125804"}, make_token(first))
+        second = Student.objects.create(google_sub="g-2", email="b@somaiya.edu")
+        response = self.post("/api/me/roll-number", {"roll_number": "16010125804"}, make_token(second))
+        self.assertEqual(response.status_code, 409)
+
+
+class RateLimitTests(ApiTestCase):
+    def test_feedback_is_limited(self):
+        _, token = self.make_student()
+        codes = [
+            self.post("/api/feedback", {"id": str(uuid.uuid4()), "experiment": EXP, "message": "Hi"}, token).status_code
+            for _ in range(21)
+        ]
+        self.assertEqual(codes[:20], [201] * 20)
+        self.assertEqual(codes[20], 429)
+
+
 class RollNumberTests(ApiTestCase):
     def test_set_once(self):
         student, token = self.make_student(roll=None)
@@ -122,7 +206,7 @@ class RollNumberTests(ApiTestCase):
 
     def test_invalid(self):
         _, token = self.make_student(roll=None)
-        for roll in ["", "ab", "has space", "x" * 21, "<script>"]:
+        for roll in ["", "ab", "has space", "x" * 21, "<script>", "26010121001", "1601012100", "160101210011", "1601012100a"]:
             response = self.post("/api/me/roll-number", {"roll_number": roll}, token)
             self.assertEqual(response.status_code, 400, roll)
 

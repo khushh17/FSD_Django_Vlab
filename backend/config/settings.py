@@ -158,6 +158,13 @@ GOOGLE_CLIENT_ID = env("GOOGLE_CLIENT_ID")
 # Only Google Workspace accounts on this domain may sign in. TODO: confirm the students' domain.
 ALLOWED_EMAIL_DOMAIN = env("ALLOWED_EMAIL_DOMAIN", "somaiya.edu")
 
+# Roll-number sign-in: every student uses their roll number and this one class password.
+# Set it in backend/.env (and in Vercel's settings); empty switches roll-number sign-in off.
+STUDENT_SHARED_PASSWORD = env("STUDENT_SHARED_PASSWORD")
+# Wrong passwords allowed per visitor address in STUDENT_LOCKOUT_SECONDS.
+STUDENT_MAX_FAILED_LOGINS = 10
+STUDENT_LOCKOUT_SECONDS = 15 * 60
+
 # Sign-in tokens expire after this many seconds; the student then signs in again.
 AUTH_TOKEN_MAX_AGE = 7 * 24 * 60 * 60
 

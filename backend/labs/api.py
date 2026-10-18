@@ -152,3 +152,28 @@ def get_choice(data, key, choices):
     if value not in choices:
         raise bad(f"'{key}' must be one of: {', '.join(map(str, choices))}.")
     return value
+
+
+def rate_limit(key, limit, window_seconds, message="Too many requests. Please wait a few minutes and try again."):
+    """
+    Allow `limit` calls per `window_seconds` for `key`, counted in Django's cache.
+    On Vercel the cache is per server instance, so this slows abuse rather than stopping it.
+    """
+    from django.core.cache import cache
+
+    cache_key = f"labs:rate:{key}"
+    if cache.add(cache_key, 1, window_seconds):
+        return
+    try:
+        count = cache.incr(cache_key)
+    except ValueError:  # expired between add() and incr()
+        cache.set(cache_key, 1, window_seconds)
+        return
+    if count > limit:
+        raise ApiError(429, "rate_limited", message)
+
+
+def client_ip(request):
+    """The visitor's address (Vercel puts it first in X-Forwarded-For)."""
+    forwarded = request.headers.get("X-Forwarded-For", "")
+    return forwarded.split(",")[0].strip() or request.META.get("REMOTE_ADDR", "")

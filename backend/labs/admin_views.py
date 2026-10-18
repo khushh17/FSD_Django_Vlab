@@ -494,7 +494,7 @@ def _export_students(experiment):
         header += [f"Posttest {level} first", f"Posttest {level} best", f"Posttest {level} attempts"]
     header += ["Simulation runs", "Predictions right %", "Rating", "Last seen"]
     rows = []
-    for r in sorted(_student_rows(experiment), key=lambda r: (r["rollNumber"] is None, r["rollNumber"] or "", r["email"])):
+    for r in sorted(_student_rows(experiment), key=lambda r: (r["rollNumber"] is None, r["rollNumber"] or "", r["email"] or "")):
         row = [r["rollNumber"], r["name"], r["email"]]
         for key in ["pretest:"] + [f"posttest:{level}" for level in levels]:
             q = r["quizzes"].get(key)

@@ -1,19 +1,30 @@
 from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
 from django.db import models
 
-# TODO: confirm Somaiya's roll number format with the professor; this accepts letters,
-# digits, '/' and '-', 4 to 20 characters.
+# Somaiya roll numbers: 11 digits, "160" + 3-digit branch + 2-digit year + 3-digit serial,
+# for example 16010125804 (branch 101 = Computer Engineering, 2025, student 804).
 roll_number_validator = RegexValidator(
-    r"^[A-Z0-9/-]{4,20}$",
-    "Enter your roll number: 4 to 20 letters, digits, '/' or '-'.",
+    r"^160\d{8}$",
+    "Enter your 11-digit roll number, for example 16010125804.",
 )
 
 
-class Student(models.Model):
-    """A student who signed in with Google. The roll number is entered once, after the first sign-in."""
+def roll_parts(roll_number):
+    """{"branch": "101", "year": "25", "serial": "804"} for a valid roll number, else None."""
+    if not roll_number or len(roll_number) != 11 or not roll_number.startswith("160"):
+        return None
+    return {"branch": roll_number[3:6], "year": roll_number[6:8], "serial": roll_number[8:]}
 
-    google_sub = models.CharField("Google account ID", max_length=255, unique=True)
-    email = models.EmailField(unique=True)
+
+class Student(models.Model):
+    """
+    A student. They sign in with their roll number and the class password, or with Google
+    (then they enter their roll number once). A Google account that enters an existing roll
+    number is joined to that student, so both ways reach the same records.
+    """
+
+    google_sub = models.CharField("Google account ID", max_length=255, unique=True, null=True, blank=True)
+    email = models.EmailField(unique=True, null=True, blank=True)
     name = models.CharField(max_length=200, blank=True)
     roll_number = models.CharField(
         max_length=20, unique=True, null=True, blank=True, validators=[roll_number_validator]
@@ -25,7 +36,7 @@ class Student(models.Model):
         ordering = ["roll_number", "email"]
 
     def __str__(self):
-        return f"{self.roll_number or '(no roll number)'} {self.email}"
+        return f"{self.roll_number or '(no roll number)'} {self.email or self.name}".strip()
 
 
 class Event(models.Model):

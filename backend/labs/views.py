@@ -1,10 +1,11 @@
 """
 JSON API used by the lab site.
 
+  POST /api/auth/roll          {roll_number, password, name?} -> {token, student}
   POST /api/auth/google        {credential}            -> {token, student}
   POST /api/auth/dev           {email, name}           -> {token, student}   (local testing only)
   GET  /api/me                                         -> {student, ratings}
-  POST /api/me/roll-number     {roll_number}           -> {student}
+  POST /api/me/roll-number     {roll_number}           -> {token, student}  (Google sign-ins)
   POST /api/events             {events: [...]}         -> {results: [...]}   quiz attempts, simulation runs
   POST /api/ratings            {experiment, stars}     -> {stars}
   GET  /api/ratings/summary?experiment=                -> {average, count}   (public)
@@ -13,13 +14,18 @@ JSON API used by the lab site.
 """
 
 from django.conf import settings
+from django.core.cache import cache
+from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 from django.db.models import Avg, Count
 from django.http import JsonResponse
+from django.utils.crypto import constant_time_compare
 
 from .api import (
     ApiError,
     bad,
+    client_ip,
+    rate_limit,
     endpoint,
     get_bool,
     get_choice,
@@ -53,12 +59,44 @@ def get_experiment(data):
 
 @endpoint("POST", auth=False)
 def google_sign_in(request):
+    rate_limit(f"google:{client_ip(request)}", 30, 15 * 60)
     credential = get_str(request.data, "credential", min_length=1, max_length=5000)
     try:
         sub, email, name = verify_google_credential(credential)
     except SignInError as err:
         raise ApiError(403, "sign_in_rejected", str(err)) from err
     return signed_in(_upsert_student(sub, email, name))
+
+
+@endpoint("POST", auth=False)
+def roll_sign_in(request):
+    """Roll number + the class password (STUDENT_SHARED_PASSWORD)."""
+    if not settings.STUDENT_SHARED_PASSWORD:
+        raise ApiError(503, "roll_sign_in_off", "Sign-in with a roll number is not set up yet. Ask your teacher.")
+    roll = _clean_roll(request.data)
+    password = get_str(request.data, "password", min_length=1, max_length=200)
+    name = get_str(request.data, "name", max_length=200, required=False)
+    failures_key = f"labs:roll-login-failures:{client_ip(request)}"
+    if cache.get(failures_key, 0) >= settings.STUDENT_MAX_FAILED_LOGINS:
+        raise ApiError(429, "locked", "Too many wrong passwords. Try again in 15 minutes.")
+    if not constant_time_compare(password, settings.STUDENT_SHARED_PASSWORD):
+        cache.set(failures_key, cache.get(failures_key, 0) + 1, settings.STUDENT_LOCKOUT_SECONDS)
+        raise ApiError(401, "bad_credentials", "Wrong roll number or password.")
+    with transaction.atomic():
+        student, _ = Student.objects.get_or_create(roll_number=roll)
+        if name and not student.name:
+            student.name = name
+            student.save(update_fields=["name"])
+    return signed_in(student)
+
+
+def _clean_roll(data):
+    roll = get_str(data, "roll_number", min_length=1, max_length=20).replace(" ", "")
+    try:
+        roll_number_validator(roll)
+    except ValidationError as exc:
+        raise bad(roll_number_validator.message, "invalid_roll_number") from exc
+    return roll
 
 
 @endpoint("POST", auth=False)
@@ -70,6 +108,22 @@ def dev_sign_in(request):
         raise bad("'email' must be an email address.")
     name = get_str(request.data, "name", max_length=200, required=False)
     return signed_in(_upsert_student(f"dev:{email}", email, name))
+
+
+def _join_google_account(google_student, roll_student):
+    """Move the Google account (and anything recorded under it) onto the roll-number student."""
+    for model in (QuizAttempt, SimulationRun, Feedback, BugReport):
+        model.objects.filter(student=google_student).update(student=roll_student)
+    for rating in Rating.objects.filter(student=google_student):
+        if not Rating.objects.filter(student=roll_student, experiment=rating.experiment).exists():
+            rating.student = roll_student
+            rating.save(update_fields=["student"])
+    sub, email, name = google_student.google_sub, google_student.email, google_student.name
+    google_student.delete()  # frees the unique Google ID and email
+    roll_student.google_sub, roll_student.email = sub, email
+    roll_student.name = roll_student.name or name
+    roll_student.save(update_fields=["google_sub", "email", "name"])
+    return roll_student
 
 
 def _upsert_student(sub, email, name):
@@ -101,18 +155,20 @@ def set_roll_number(request):
     if student.roll_number:
         # Changing it would let a student move their results to someone else.
         raise ApiError(409, "roll_number_set", "Your roll number is already saved. Ask the admin to change it.")
-    roll = get_str(request.data, "roll_number", min_length=1, max_length=20).upper()
-    try:
-        roll_number_validator(roll)
-    except Exception as exc:  # ValidationError
-        raise bad(roll_number_validator.message, "invalid_roll_number") from exc
-    student.roll_number = roll
-    try:
-        with transaction.atomic():
+    roll = _clean_roll(request.data)
+    with transaction.atomic():
+        existing = Student.objects.select_for_update().filter(roll_number=roll).first()
+        if existing is None:
+            student.roll_number = roll
             student.save(update_fields=["roll_number"])
-    except IntegrityError as exc:
-        raise ApiError(409, "roll_number_taken", "This roll number is already used by another account. Ask the admin.") from exc
-    return JsonResponse({"student": student_json(student)})
+        elif existing.google_sub is None and student.google_sub:
+            # This roll number signed in with the class password before: join this Google
+            # account to that student, so both sign-ins reach the same records.
+            student = _join_google_account(student, existing)
+        else:
+            raise ApiError(409, "roll_number_taken", "This roll number is already used by another account. Ask the admin.")
+    # The student may now be a different record (after joining): send a new token.
+    return signed_in(student)
 
 
 # ---- events sent in the background (quiz attempts, simulation runs) ----
@@ -120,6 +176,7 @@ def set_roll_number(request):
 
 @endpoint("POST", roll_number=True)
 def events(request):
+    rate_limit(f"events:{request.student.pk}", 200, 60 * 60)
     batch = request.data.get("events")
     if not isinstance(batch, list) or not 1 <= len(batch) <= MAX_EVENTS_PER_BATCH:
         raise bad(f"'events' must be a list of 1 to {MAX_EVENTS_PER_BATCH} events.")
@@ -233,6 +290,7 @@ def rating_summary(request):
 
 @endpoint("POST")
 def rate(request):
+    rate_limit(f"rate:{request.student.pk}", 30, 60 * 60)
     experiment = get_experiment(request.data)
     stars = get_int(request.data, "stars", min_value=1, max_value=5)
     Rating.objects.update_or_create(student=request.student, experiment=experiment, defaults={"stars": stars})
@@ -241,6 +299,7 @@ def rate(request):
 
 @endpoint("POST")
 def feedback(request):
+    rate_limit(f"feedback:{request.student.pk}", 20, 60 * 60, "You have sent a lot of feedback. Please try again later.")
     data = request.data
     client_id = get_uuid(data, "id")
     if not Feedback.objects.filter(client_id=client_id).exists():
@@ -255,6 +314,7 @@ def feedback(request):
 
 @endpoint("POST")
 def bug_report(request):
+    rate_limit(f"bugs:{request.student.pk}", 20, 60 * 60, "You have sent a lot of reports. Please try again later.")
     data = request.data
     client_id = get_uuid(data, "id")
     if not BugReport.objects.filter(client_id=client_id).exists():
