@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import { MOBILE_QUERY, useMediaQuery } from '../../hooks/useMediaQuery.js'
+import { useRatingSummary } from '../../lib/useRatingSummary.js'
 import AccountBar from '../account/AccountBar.jsx'
 import { useAuth } from '../account/authContext.js'
 import BugReportDialog from '../account/BugReportDialog.jsx'
@@ -59,6 +60,9 @@ export default function ExperimentLayout({ meta, basePath }) {
   // With a backend the rating is the signed-in student's saved one; without, it is kept on this page only.
   const [pageRating, setPageRating] = useState(null)
   const userRating = auth.status === 'disabled' ? pageRating : (auth.ratings[meta.slug] ?? null)
+  // Everyone's average (from the backend); the header shows the visitor's own rating instead once they rate.
+  const { summary: ratingSummary, refresh: refreshRatingSummary } = useRatingSummary(meta.slug)
+  const averageRating = ratingSummary?.count ? ratingSummary.average : meta.rating
   const rateReturnFocus = useRef(null)
 
   function openRate(trigger) {
@@ -102,6 +106,7 @@ export default function ExperimentLayout({ meta, basePath }) {
     setRateState({ busy: true, error: null })
     try {
       await auth.rate(meta.slug, value)
+      refreshRatingSummary()
       closeRate()
     } catch (err) {
       setRateState({ busy: false, error: err.message })
@@ -141,7 +146,7 @@ export default function ExperimentLayout({ meta, basePath }) {
         menuExpanded={isMobile ? drawerOpen : !sidebarHidden}
         menuControls={isMobile ? DRAWER_ID : SIDEBAR_ID}
         onMenuToggle={onMenuToggle}
-        rating={userRating ?? meta.rating}
+        rating={userRating ?? averageRating}
         ratingIsOwn={userRating != null}
         onRate={openRate}
         onReportBug={reportBug}

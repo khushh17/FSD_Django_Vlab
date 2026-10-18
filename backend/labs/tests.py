@@ -144,7 +144,7 @@ def quiz_event(**data_overrides):
         "retake": False,
         "answers": [
             {"questionId": "mw-order-01", "chosen": 1, "correct": True},
-            {"questionId": "mw-order-02", "chosen": None, "correct": False},
+            {"questionId": "urls-root-urlconf-01", "chosen": None, "correct": False},
         ],
         **data_overrides,
     }
@@ -179,13 +179,29 @@ class EventTests(ApiTestCase):
         self.assertEqual(response.json()["results"][0]["ok"], True)
         attempt = QuizAttempt.objects.get()
         self.assertEqual((attempt.student, attempt.kind, attempt.level, attempt.score, attempt.total), (self.student, "posttest", "easy", 1, 2))
-        self.assertEqual(list(attempt.answers.values_list("question_id", "chosen", "correct")), [("mw-order-01", 1, True), ("mw-order-02", None, False)])
+        self.assertEqual(list(attempt.answers.values_list("question_id", "chosen", "correct")), [("mw-order-01", 1, True), ("urls-root-urlconf-01", None, False)])
 
     def test_simulation_run_saved(self):
         self.send(sim_event())
         run = SimulationRun.objects.get()
         self.assertEqual((run.lab, run.prediction_correct, run.steps_viewed, run.used_run_to_end), ("middleware", True, 4, True))
         self.assertEqual(run.config["request"], "post-no-token")
+
+    def test_marked_on_the_server_not_by_the_browser(self):
+        # The browser claims full marks with a wrong option; the server marks it wrong.
+        tampered = quiz_event(score=2, total=2, answers=[
+            {"questionId": "mw-order-01", "chosen": 0, "correct": True},
+            {"questionId": "wsgi-application-01", "chosen": 1, "correct": True},
+        ])
+        self.assertEqual(self.send(tampered).json()["results"][0]["ok"], True)
+        attempt = QuizAttempt.objects.get()
+        self.assertEqual((attempt.score, attempt.total), (1, 2))
+        self.assertEqual(list(attempt.answers.values_list("correct", flat=True)), [False, True])
+
+    def test_pretest_level_is_ignored(self):
+        self.send(quiz_event(kind="pretest", level="hard", answers=[{"questionId": "pre-http-method-01", "chosen": 1}]))
+        attempt = QuizAttempt.objects.get()
+        self.assertEqual((attempt.level, attempt.score), ("", 1))
 
     def test_sent_twice_is_stored_once(self):
         event = quiz_event()
@@ -195,10 +211,14 @@ class EventTests(ApiTestCase):
         self.assertEqual(QuizAttempt.objects.count(), 1)
 
     def test_bad_events_are_rejected_one_by_one(self):
-        good, wrong_score = quiz_event(), quiz_event(score=2)
+        good = quiz_event()
         bad_cases = [
-            wrong_score,
-            quiz_event(total=3),
+            quiz_event(answers=[{"questionId": "made-up-01", "chosen": 0, "correct": True}]),
+            quiz_event(answers=[{"questionId": "pre-http-method-01", "chosen": 1, "correct": True}]),  # pretest question
+            quiz_event(answers=[{"questionId": "mw-template-response-01", "chosen": 0, "correct": True}]),  # hard only
+            quiz_event(answers=[{"questionId": "mw-order-01", "chosen": 9, "correct": True}]),  # no option 9
+            quiz_event(answers=[{"questionId": "mw-order-01", "chosen": 1}, {"questionId": "mw-order-01", "chosen": 1}]),
+            quiz_event(level="expert"),
             quiz_event(kind="midterm"),
             quiz_event(answers=[]),
             {**quiz_event(), "experiment": "someone-else"},
@@ -244,6 +264,16 @@ class FormTests(ApiTestCase):
         self.assertEqual(Rating.objects.get().stars, 5)
         self.assertEqual(self.get("/api/me", self.token).json()["ratings"], {EXP: 5})
 
+    def test_rating_summary_is_public(self):
+        self.assertEqual(self.get(f"/api/ratings/summary?experiment={EXP}").json(), {"experiment": EXP, "average": None, "count": 0})
+        other, other_token = self.make_student("R009", "z@somaiya.edu")
+        self.post("/api/ratings", {"experiment": EXP, "stars": 4}, self.token)
+        self.post("/api/ratings", {"experiment": EXP, "stars": 5}, other_token)
+        response = self.get(f"/api/ratings/summary?experiment={EXP}")
+        self.assertEqual((response.json()["average"], response.json()["count"]), (4.5, 2))
+        self.assertIn("max-age", response["Cache-Control"])
+        self.assertEqual(self.get("/api/ratings/summary?experiment=nope").status_code, 400)
+
     def test_rating_range(self):
         for stars in [0, 6, "5", 4.5, True]:
             self.assertEqual(self.post("/api/ratings", {"experiment": EXP, "stars": stars}, self.token).status_code, 400)
@@ -284,6 +314,7 @@ class CorsTests(ApiTestCase):
         self.assertEqual(response.status_code, 401)
         self.assertEqual(response["Access-Control-Allow-Origin"], SITE)
         self.assertIn("Origin", response["Vary"])
+        self.assertEqual(response["Access-Control-Expose-Headers"], "Content-Disposition")
 
     def test_admin_untouched(self):
         response = self.client.get("/admin/login/", HTTP_ORIGIN=SITE)
@@ -294,7 +325,7 @@ class CorsTests(ApiTestCase):
     CACHES={"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache", "LOCATION": "admin-tests"}},
     PASSWORD_HASHERS=["django.contrib.auth.hashers.MD5PasswordHasher"],  # fast, tests only
 )
-class AdminApiTests(ApiTestCase):
+class AdminTestBase(ApiTestCase):
     def setUp(self):
         from django.contrib.auth import get_user_model
         from django.core.cache import cache
@@ -323,6 +354,12 @@ class AdminApiTests(ApiTestCase):
         QuizAnswer.objects.bulk_create(QuizAnswer(attempt=a, question_id=q, chosen=ch, correct=c) for q, ch, c in answers)
         return a
 
+
+@override_settings(
+    CACHES={"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache", "LOCATION": "admin-tests"}},
+    PASSWORD_HASHERS=["django.contrib.auth.hashers.MD5PasswordHasher"],  # fast, tests only
+)
+class AdminApiTests(AdminTestBase):
     def test_login(self):
         self.assertEqual(self.get("/api/admin/me", self.token).json()["admin"]["username"], "prof")
         self.assertEqual(self.login("prof", "wrong").status_code, 401)
@@ -443,6 +480,19 @@ class AdminApiTests(ApiTestCase):
 
 
 class PackagingTests(TestCase):
+    def test_answer_keys_match_the_question_banks(self):
+        import shutil
+        import subprocess
+        from pathlib import Path
+
+        if shutil.which("node") is None:
+            self.skipTest("Node is not installed")
+        root = Path(__file__).resolve().parent.parent.parent
+        result = subprocess.run(
+            ["node", "scripts/export-question-banks.mjs", "--check"], cwd=root, capture_output=True, text=True
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+
     def test_pyproject_dependencies_match_requirements(self):
         import tomllib
         from pathlib import Path
@@ -455,3 +505,43 @@ class PackagingTests(TestCase):
             if line.strip() and not line.startswith("#")
         ]
         self.assertEqual(sorted(pyproject), sorted(requirements), "Update pyproject.toml and requirements.txt together.")
+
+
+class ExportTests(AdminTestBase):
+    def csv_rows(self, table):
+        import csv
+        import io
+
+        response = self.get(f"/api/admin/export?table={table}", self.token)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response["Content-Type"].startswith("text/csv"))
+        self.assertIn(f"{EXP}-{table}-", response["Content-Disposition"])
+        text = response.content.decode("utf-8")
+        self.assertTrue(text.startswith("﻿"))  # so Excel reads UTF-8
+        return list(csv.reader(io.StringIO(text[1:])))
+
+    def test_students_and_attempts(self):
+        a, _ = self.make_student("R001", "a@somaiya.edu")
+        self.attempt(a, "pretest", "", [("q1", 0, True), ("q2", 1, False)], when=1)
+        self.attempt(a, "posttest", "hard", [("h1", 0, True)], when=2)
+        rows = self.csv_rows("students")
+        self.assertEqual(rows[0][:6], ["Roll number", "Name", "Email", "Pretest first", "Pretest best", "Pretest attempts"])
+        row = next(r for r in rows if r[0] == "R001")
+        self.assertEqual(row[3:6], ["1/2", "1/2", "1"])
+        hard = rows[0].index("Posttest hard best")
+        self.assertEqual(row[hard], "1/1")
+        attempts = self.csv_rows("attempts")
+        self.assertEqual([r[2] for r in attempts[1:]], ["pretest", "posttest"])
+        self.assertEqual(len(self.csv_rows("answers")), 1 + 3)
+
+    def test_formulas_are_neutralised(self):
+        _, token = self.make_student("R001", "a@somaiya.edu")
+        self.post("/api/feedback", {"id": str(uuid.uuid4()), "experiment": EXP, "message": '=HYPERLINK("http://x")'}, token)
+        rows = self.csv_rows("feedback")
+        self.assertEqual(rows[1][3], '\'=HYPERLINK("http://x")')
+
+    def test_every_table_and_access(self):
+        for table in ["students", "attempts", "answers", "runs", "feedback", "bugs"]:
+            self.csv_rows(table)
+        self.assertEqual(self.get("/api/admin/export?table=passwords", self.token).status_code, 400)
+        self.assertEqual(self.get("/api/admin/export?table=students").status_code, 401)

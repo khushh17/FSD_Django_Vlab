@@ -14,8 +14,9 @@ export const meta = {
   // without one it is kept on the page only.
   // Optional external Report a Bug URL. When null and a backend is set, the built-in form is used.
   bugReportUrl: null,
-  // TODO: average rating (0-5). null shows unrated (outline) stars until the
-  // visitor rates the experiment; then the header shows their own rating.
+  // Fallback average rating (0-5) when the backend has none (no backend, or no ratings yet).
+  // With a backend, the header shows the students' average; a student who has rated sees
+  // their own rating. null shows unrated (outline) stars.
   rating: null,
 
   // Posttest levels, in the order the level picker shows them.

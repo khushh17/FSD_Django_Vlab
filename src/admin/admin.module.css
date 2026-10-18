@@ -575,3 +575,33 @@
   color: var(--link);
   text-decoration: underline;
 }
+
+/* Export */
+.exportList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.exportList li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 24px;
+  margin-bottom: 8px;
+  padding: 12px 16px;
+  border: 1px solid #dee2e6;
+}
+
+.exportTitle {
+  margin: 0 0 4px;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.exportText {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #586069;
+}

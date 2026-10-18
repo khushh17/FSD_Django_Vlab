@@ -15,6 +15,7 @@ const PAGES = [
   { to: '/admin/simulation', label: 'Simulation analysis' },
   { to: '/admin/feedback', label: 'Feedback' },
   { to: '/admin/bugs', label: 'Bug reports' },
+  { to: '/admin/export', label: 'Export' },
 ]
 
 export default function AdminLayout() {

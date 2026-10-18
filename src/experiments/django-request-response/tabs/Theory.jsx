@@ -175,10 +175,10 @@ export default function Theory() {
       </p>
       <RequestJourney />
       <Figure
-        src="cycle-overview.png"
-        alt="The full request to response flow through a Django project"
+        src="cycle-overview.gif"
+        alt="Flow diagram: the browser sends a request through the web server (Nginx or Apache) and WSGI to the request middleware, URL resolution (urls.py), the view middleware and the view (views.py), which uses the model, managers and the database. The view's result passes through the template middleware and the template, or through the exception middleware on an error, then the response middleware, and goes back through WSGI and the web server to the browser."
         caption="Figure 1. The request–response cycle in a Django project."
-        credit={null} // TODO: source of cycle-overview.png
+        credit={null} // TODO: source and author of cycle-overview.gif
         creditUrl={null}
       />
 

@@ -3,11 +3,16 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "engines": {
+    "node": ">=20.19"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "lint": "oxlint",
     "preview": "vite preview",
+    "export:keys": "node scripts/export-question-banks.mjs --write",
+    "check:keys": "node scripts/export-question-banks.mjs --check",
     "predeploy": "npm run build",
     "deploy": "gh-pages -d dist --nojekyll"
   },

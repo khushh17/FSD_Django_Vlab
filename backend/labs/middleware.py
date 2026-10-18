@@ -31,5 +31,7 @@ class CorsMiddleware:
 
         if allowed:
             response["Access-Control-Allow-Origin"] = origin
+            # Lets the admin pages read a CSV download's file name.
+            response["Access-Control-Expose-Headers"] = "Content-Disposition"
         response["Vary"] = ", ".join(filter(None, [response.get("Vary"), "Origin"]))
         return response

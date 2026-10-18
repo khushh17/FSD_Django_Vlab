@@ -1,0 +1,363 @@
+{
+  "django-request-response": {
+    "posttestLevels": [
+      "easy",
+      "medium",
+      "hard"
+    ],
+    "questions": {
+      "pre-http-method-01": {
+        "kind": "pretest",
+        "levels": [],
+        "answer": 1,
+        "options": 4
+      },
+      "pre-status-codes-01": {
+        "kind": "pretest",
+        "levels": [],
+        "answer": 2,
+        "options": 4
+      },
+      "pre-url-parts-01": {
+        "kind": "pretest",
+        "levels": [],
+        "answer": 1,
+        "options": 4
+      },
+      "pre-mvt-01": {
+        "kind": "pretest",
+        "levels": [],
+        "answer": 2,
+        "options": 4
+      },
+      "pre-web-server-01": {
+        "kind": "pretest",
+        "levels": [],
+        "answer": 2,
+        "options": 4
+      },
+      "mw-order-01": {
+        "kind": "posttest",
+        "levels": [
+          "easy",
+          "medium",
+          "hard"
+        ],
+        "answer": 1,
+        "options": 4
+      },
+      "urls-root-urlconf-01": {
+        "kind": "posttest",
+        "levels": [
+          "easy",
+          "medium"
+        ],
+        "answer": 2,
+        "options": 4
+      },
+      "mw-short-circuit-01": {
+        "kind": "posttest",
+        "levels": [
+          "medium",
+          "hard"
+        ],
+        "answer": 3,
+        "options": 4
+      },
+      "urls-append-slash-01": {
+        "kind": "posttest",
+        "levels": [
+          "medium"
+        ],
+        "answer": 0,
+        "options": 4
+      },
+      "mw-template-response-01": {
+        "kind": "posttest",
+        "levels": [
+          "hard"
+        ],
+        "answer": 2,
+        "options": 4
+      },
+      "mw-auth-after-session-01": {
+        "kind": "posttest",
+        "levels": [
+          "hard"
+        ],
+        "answer": 0,
+        "options": 4
+      },
+      "view-returns-none-01": {
+        "kind": "posttest",
+        "levels": [
+          "hard"
+        ],
+        "answer": 3,
+        "options": 4
+      },
+      "wsgi-application-01": {
+        "kind": "posttest",
+        "levels": [
+          "easy"
+        ],
+        "answer": 1,
+        "options": 4
+      },
+      "wsgi-runserver-01": {
+        "kind": "posttest",
+        "levels": [
+          "easy"
+        ],
+        "answer": 2,
+        "options": 4
+      },
+      "request-class-01": {
+        "kind": "posttest",
+        "levels": [
+          "easy"
+        ],
+        "answer": 3,
+        "options": 4
+      },
+      "request-get-01": {
+        "kind": "posttest",
+        "levels": [
+          "easy"
+        ],
+        "answer": 1,
+        "options": 4
+      },
+      "mw-process-view-01": {
+        "kind": "posttest",
+        "levels": [
+          "easy"
+        ],
+        "answer": 0,
+        "options": 4
+      },
+      "urls-first-match-01": {
+        "kind": "posttest",
+        "levels": [
+          "easy",
+          "medium",
+          "hard"
+        ],
+        "answer": 3,
+        "options": 4
+      },
+      "urls-int-converter-01": {
+        "kind": "posttest",
+        "levels": [
+          "easy"
+        ],
+        "answer": 1,
+        "options": 4
+      },
+      "view-as-view-01": {
+        "kind": "posttest",
+        "levels": [
+          "easy"
+        ],
+        "answer": 2,
+        "options": 4
+      },
+      "response-json-01": {
+        "kind": "posttest",
+        "levels": [
+          "easy"
+        ],
+        "answer": 1,
+        "options": 4
+      },
+      "errors-http404-01": {
+        "kind": "posttest",
+        "levels": [
+          "easy"
+        ],
+        "answer": 2,
+        "options": 4
+      },
+      "response-request-finished-01": {
+        "kind": "posttest",
+        "levels": [
+          "easy"
+        ],
+        "answer": 3,
+        "options": 4
+      },
+      "mw-predict-output-01": {
+        "kind": "posttest",
+        "levels": [
+          "easy",
+          "medium",
+          "hard"
+        ],
+        "answer": 0,
+        "options": 4
+      },
+      "urls-include-01": {
+        "kind": "posttest",
+        "levels": [
+          "medium"
+        ],
+        "answer": 1,
+        "options": 4
+      },
+      "urls-order-01": {
+        "kind": "posttest",
+        "levels": [
+          "medium",
+          "hard"
+        ],
+        "answer": 2,
+        "options": 4
+      },
+      "urls-int-no-match-01": {
+        "kind": "posttest",
+        "levels": [
+          "medium"
+        ],
+        "answer": 1,
+        "options": 4
+      },
+      "request-post-json-01": {
+        "kind": "posttest",
+        "levels": [
+          "medium"
+        ],
+        "answer": 2,
+        "options": 4
+      },
+      "view-dispatch-405-01": {
+        "kind": "posttest",
+        "levels": [
+          "medium"
+        ],
+        "answer": 3,
+        "options": 4
+      },
+      "mw-process-view-response-01": {
+        "kind": "posttest",
+        "levels": [
+          "medium",
+          "hard"
+        ],
+        "answer": 1,
+        "options": 4
+      },
+      "response-redirect-01": {
+        "kind": "posttest",
+        "levels": [
+          "medium"
+        ],
+        "answer": 2,
+        "options": 4
+      },
+      "errors-permission-denied-01": {
+        "kind": "posttest",
+        "levels": [
+          "medium"
+        ],
+        "answer": 1,
+        "options": 4
+      },
+      "view-queryset-lazy-01": {
+        "kind": "posttest",
+        "levels": [
+          "medium"
+        ],
+        "answer": 2,
+        "options": 4
+      },
+      "wsgi-settings-module-01": {
+        "kind": "posttest",
+        "levels": [
+          "medium"
+        ],
+        "answer": 1,
+        "options": 4
+      },
+      "urls-request-urlconf-01": {
+        "kind": "posttest",
+        "levels": [
+          "hard"
+        ],
+        "answer": 1,
+        "options": 4
+      },
+      "mw-exception-order-01": {
+        "kind": "posttest",
+        "levels": [
+          "hard"
+        ],
+        "answer": 2,
+        "options": 4
+      },
+      "mw-exception-scope-01": {
+        "kind": "posttest",
+        "levels": [
+          "hard"
+        ],
+        "answer": 2,
+        "options": 4
+      },
+      "urls-append-slash-post-01": {
+        "kind": "posttest",
+        "levels": [
+          "hard"
+        ],
+        "answer": 3,
+        "options": 4
+      },
+      "view-template-response-swap-01": {
+        "kind": "posttest",
+        "levels": [
+          "hard"
+        ],
+        "answer": 1,
+        "options": 4
+      },
+      "errors-debug-404-01": {
+        "kind": "posttest",
+        "levels": [
+          "hard"
+        ],
+        "answer": 0,
+        "options": 4
+      },
+      "errors-middleware-sees-response-01": {
+        "kind": "posttest",
+        "levels": [
+          "hard"
+        ],
+        "answer": 2,
+        "options": 4
+      },
+      "response-streaming-content-01": {
+        "kind": "posttest",
+        "levels": [
+          "hard"
+        ],
+        "answer": 0,
+        "options": 4
+      },
+      "wsgi-handler-order-01": {
+        "kind": "posttest",
+        "levels": [
+          "hard"
+        ],
+        "answer": 1,
+        "options": 4
+      },
+      "request-post-in-middleware-01": {
+        "kind": "posttest",
+        "levels": [
+          "hard"
+        ],
+        "answer": 1,
+        "options": 4
+      }
+    }
+  }
+}

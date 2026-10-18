@@ -4,6 +4,7 @@ import AdminLayout from './AdminLayout.jsx'
 import AdminProvider from './AdminProvider.jsx'
 import { useAdmin } from './adminAuth.js'
 import BugReports from './pages/BugReports.jsx'
+import Export from './pages/Export.jsx'
 import FeedbackInbox from './pages/FeedbackInbox.jsx'
 import Login from './pages/Login.jsx'
 import Overview from './pages/Overview.jsx'
@@ -43,6 +44,7 @@ export default function AdminApp() {
           <Route path="simulation" element={<SimulationAnalysis />} />
           <Route path="feedback" element={<FeedbackInbox />} />
           <Route path="bugs" element={<BugReports />} />
+          <Route path="export" element={<Export />} />
           <Route path="*" element={<Navigate to="/admin" replace />} />
         </Route>
       </Routes>

@@ -84,6 +84,10 @@ the top of `posttestBank.js`. Each Posttest level shows 10 questions drawn from 
 level's pool, spread across topics; Retake shuffles question and option order. The last
 score per level is kept in `localStorage`.
 
+After changing any question's answer, options or levels, run `npm run export:keys`: the
+backend marks answers with `backend/labs/question_keys.json`. A backend test (and
+`npm run check:keys`) fails if the file is out of date.
+
 ## Content accuracy
 
 Content targets the Django **stable** docs (6.1 at the time of writing). Behavioural
@@ -175,6 +179,7 @@ separate bundle that students never download.
 | Simulation analysis | Runs grouped by setup, hardest to predict first, with the actual outcome and the wrong predictions students made most |
 | Feedback | Every message, newest first, searchable, linked to the student |
 | Bug reports | Open, fixed or all; mark a report fixed or reopen it |
+| Export | CSV downloads for Excel or Google Sheets: students (for marking), attempts, answers, simulation runs, feedback, bug reports |
 
 The sign-in lasts 12 hours and ends when the tab is closed; changing the password signs
 out everywhere. After 5 wrong passwords for a username, sign-in is blocked for 15 minutes.
@@ -221,9 +226,9 @@ backend\.venv\Scripts\python backend\manage.py test labs
 
 ### Known limits (later phases)
 
-- Quiz scores are worked out in the browser. The server checks that the score matches the
-  answers sent, but a student who edits requests could still send made-up answers. To stop
-  that, the server needs the answer keys.
+- Quiz answers are marked on the server with `backend/labs/question_keys.json`, so a score
+  cannot be made up. The answers are still in the site's code (the quiz shows explanations
+  after submitting), so a determined student could look them up before answering.
 - No rate limiting yet on the student endpoints. The admin lockout counts wrong passwords in Django's
   cache, which on Vercel is per server instance, so it slows guessing but is not a hard limit.
 - Signing out does not cancel an issued token; it just expires after 7 days.
@@ -258,7 +263,7 @@ items marked in it.
 | Roll number format (now: 4–20 letters, digits, `/` or `-`) | `backend/labs/models.py` |
 | Google Form URL for the Feedback tab (optional now that feedback is built in), and the sign-off name | `src/config/site.js` |
 | Breadcrumb links (Computer Science and Engineering, Python, Django) | `meta.js` |
-| The four diagram images and their source credits | `public/diagrams/`, `tabs/Theory.jsx` |
+| Diagrams: Figure 1 is in (`cycle-overview.gif`), its source and author still needed; Figures 2–4 still needed (`middleware-onion.png`, `middleware-hooks-flow.png`, `url-resolution.png`) | `public/diagrams/`, `tabs/Theory.jsx` |
 | Footer contact phone and email, further community links | `src/config/site.js` |
 | Confirm the AGPL 3.0 / CC BY-NC-SA 4.0 licences apply | `src/config/site.js` |
 | Favicon | `index.html` |
@@ -276,9 +281,6 @@ items marked in it.
 
 | Item | Notes |
 | --- | --- |
-| CSV export of students, attempts and runs (for marking) | Admin pages |
 | Landing page listing every experiment; merge other students' experiments | `src/experiments/registry.js`, `LAB_EXPERIMENTS` in `backend/config/settings.py` |
-| Show the average rating in the header from the backend (instead of `meta.rating`) | Needs a public ratings summary endpoint |
-| Check quiz answers on the server (send it the answer keys) | See Known limits |
 | Rate limiting on student endpoints; a shared store for the admin lockout | See Known limits |
 | Students list currently shows every signed-in student, also those from other experiments | Filter by class or experiment once there are several |

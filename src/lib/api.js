@@ -9,8 +9,11 @@ export class ApiError extends Error {
   }
 }
 
-/** JSON request to the backend. Resolves to the parsed body; rejects with ApiError. */
-export async function apiFetch(path, { method = 'GET', body, token, timeoutMs = 15000 } = {}) {
+/**
+ * JSON request to the backend. Resolves to the parsed body (or, with `file: true`, to
+ * { blob, filename } for a download); rejects with ApiError.
+ */
+export async function apiFetch(path, { method = 'GET', body, token, timeoutMs = 15000, cache, file = false } = {}) {
   const headers = {}
   if (body !== undefined) headers['Content-Type'] = 'application/json'
   if (token) headers.Authorization = `Bearer ${token}`
@@ -23,11 +26,16 @@ export async function apiFetch(path, { method = 'GET', body, token, timeoutMs = 
       headers,
       body: body === undefined ? undefined : JSON.stringify(body),
       signal: controller.signal,
+      cache,
     })
   } catch {
     throw new ApiError(0, 'network', 'Could not reach the server. Check your connection and try again.')
   } finally {
     clearTimeout(timer)
+  }
+  if (file && response.ok) {
+    const match = /filename="([^"]+)"/.exec(response.headers.get('Content-Disposition') ?? '')
+    return { blob: await response.blob(), filename: match?.[1] ?? 'download' }
   }
   let data = null
   try {

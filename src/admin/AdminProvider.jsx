@@ -52,9 +52,32 @@ export default function AdminProvider({ children }) {
     [token, logout],
   )
 
+  // Download a file from an admin endpoint (the token cannot go in a plain link).
+  const download = useCallback(
+    async (path) => {
+      let file
+      try {
+        file = await apiFetch(path, { token, file: true, timeoutMs: 60000 })
+      } catch (err) {
+        if (err.status === 401) logout()
+        throw err
+      }
+      const url = URL.createObjectURL(file.blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = file.filename
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      setTimeout(() => URL.revokeObjectURL(url), 1000)
+      return file.filename
+    },
+    [token, logout],
+  )
+
   const value = useMemo(
-    () => ({ admin: session?.admin ?? null, token: session?.token ?? null, login, logout, call }),
-    [session, login, logout, call],
+    () => ({ admin: session?.admin ?? null, token: session?.token ?? null, login, logout, call, download }),
+    [session, login, logout, call, download],
   )
   return <AdminContext.Provider value={value}>{children}</AdminContext.Provider>
 }

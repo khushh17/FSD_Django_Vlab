@@ -14,6 +14,7 @@ urlpatterns = [
     path("api/me/roll-number", views.set_roll_number),
     path("api/events", views.events),
     path("api/ratings", views.rate),
+    path("api/ratings/summary", views.rating_summary),
     path("api/feedback", views.feedback),
     path("api/bug-reports", views.bug_report),
     path("api/admin/login", admin_views.login),
@@ -26,4 +27,5 @@ urlpatterns = [
     path("api/admin/bugs", admin_views.bug_list),
     path("api/admin/bugs/<int:bug_id>", admin_views.bug_update),
     path("api/admin/simulation", admin_views.simulation),
+    path("api/admin/export", admin_views.export),
 ]

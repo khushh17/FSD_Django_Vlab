@@ -7,12 +7,14 @@ JSON API used by the lab site.
   POST /api/me/roll-number     {roll_number}           -> {student}
   POST /api/events             {events: [...]}         -> {results: [...]}   quiz attempts, simulation runs
   POST /api/ratings            {experiment, stars}     -> {stars}
+  GET  /api/ratings/summary?experiment=                -> {average, count}   (public)
   POST /api/feedback           {id, experiment, message}
   POST /api/bug-reports        {id, experiment, page, description}
 """
 
 from django.conf import settings
 from django.db import IntegrityError, transaction
+from django.db.models import Avg, Count
 from django.http import JsonResponse
 
 from .api import (
@@ -23,11 +25,13 @@ from .api import (
     get_choice,
     get_int,
     get_object,
+    get_query_choice,
     get_str,
     get_uuid,
 )
 from .auth import SignInError, make_token, verify_google_credential
 from .models import BugReport, Feedback, QuizAnswer, QuizAttempt, Rating, SimulationRun, Student, roll_number_validator
+from .question_keys import keys_for
 
 MAX_EVENTS_PER_BATCH = 50
 
@@ -146,25 +150,32 @@ def _save_quiz_attempt(student, experiment, client_id, data):
     if QuizAttempt.objects.filter(client_id=client_id).exists():
         return True
     kind = get_choice(data, "kind", [QuizAttempt.PRETEST, QuizAttempt.POSTTEST])
-    level = get_str(data, "level", max_length=20, required=False)
+    keys = keys_for(experiment)
+    if keys is None:
+        raise ApiError(500, "no_answer_keys", "The server has no answer keys for this experiment.")
+    if kind == QuizAttempt.POSTTEST:
+        level = get_choice(data, "level", keys["posttestLevels"])
+    else:
+        level = ""
     answers = data.get("answers")
     if not isinstance(answers, list) or not 1 <= len(answers) <= 100:
         raise bad("'answers' must be a list of 1 to 100 answers.")
-    clean = []
+    # Marked here with the answer keys. The browser's own marking ("correct", "score") is
+    # not trusted: a student could edit the request.
+    clean, seen = [], set()
     for answer in answers:
         if not isinstance(answer, dict):
             raise bad("Each answer must be a JSON object.")
-        clean.append(
-            QuizAnswer(
-                question_id=get_str(answer, "questionId", min_length=1, max_length=100),
-                chosen=get_int(answer, "chosen", min_value=0, max_value=50, allow_null=True),
-                correct=get_bool(answer, "correct"),
-            )
-        )
-    score = get_int(data, "score", min_value=0, max_value=100)
-    total = get_int(data, "total", min_value=1, max_value=100)
-    if total != len(clean) or score != sum(a.correct for a in clean):
-        raise bad("'score' and 'total' do not match the answers.")
+        question_id = get_str(answer, "questionId", min_length=1, max_length=100)
+        key = keys["questions"].get(question_id)
+        if key is None or key["kind"] != kind or (level and level not in key["levels"]):
+            raise bad(f"Question '{question_id}' is not part of this test.")
+        if question_id in seen:
+            raise bad(f"Question '{question_id}' is answered twice.")
+        seen.add(question_id)
+        chosen = get_int(answer, "chosen", min_value=0, max_value=key["options"] - 1, allow_null=True)
+        clean.append(QuizAnswer(question_id=question_id, chosen=chosen, correct=chosen == key["answer"]))
+    score, total = sum(a.correct for a in clean), len(clean)
     with transaction.atomic():
         attempt = QuizAttempt.objects.create(
             student=student,
@@ -207,6 +218,17 @@ EVENT_HANDLERS = {"quiz_attempt": _save_quiz_attempt, "simulation_run": _save_si
 
 
 # ---- forms the student submits and waits for ----
+
+
+@endpoint("GET", auth=False)
+def rating_summary(request):
+    """Public: the average rating shown in every visitor's header."""
+    experiment = get_query_choice(request, "experiment", settings.LAB_EXPERIMENTS)
+    summary = Rating.objects.filter(experiment=experiment).aggregate(average=Avg("stars"), count=Count("id"))
+    average = round(summary["average"], 1) if summary["average"] is not None else None
+    response = JsonResponse({"experiment": experiment, "average": average, "count": summary["count"]})
+    response["Cache-Control"] = "public, max-age=300"
+    return response
 
 
 @endpoint("POST")

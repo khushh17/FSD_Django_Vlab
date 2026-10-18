@@ -12,8 +12,11 @@ token. Data is small (one class per experiment), so the numbers are worked out i
   GET  /api/admin/bugs?experiment=&status=                   -> bug reports, newest first
   POST /api/admin/bugs/<id>            {status}              -> mark open / fixed
   GET  /api/admin/simulation?experiment=&lab=                -> runs grouped by setup
+  GET  /api/admin/export?experiment=&table=                  -> CSV file (students, attempts, answers, runs, feedback, bugs)
 """
 
+import csv
+import io
 import json
 from collections import Counter, defaultdict
 from datetime import timedelta
@@ -22,7 +25,7 @@ from statistics import mean, median
 from django.conf import settings
 from django.contrib.auth import authenticate
 from django.core.cache import cache
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
 from django.utils import timezone
 
 from .api import ApiError, endpoint, get_choice, get_query_choice, get_str
@@ -210,6 +213,10 @@ def _score_json(attempt):
 @endpoint("GET", auth="admin")
 def students(request):
     experiment = _experiment(request)
+    return JsonResponse({"experiment": experiment, "students": _student_rows(experiment)})
+
+
+def _student_rows(experiment):
     by_student = _attempts_by_student(experiment)
     runs = defaultdict(list)
     for r in SimulationRun.objects.filter(experiment=experiment):
@@ -241,7 +248,7 @@ def students(request):
                 "rating": ratings.get(s.pk),
             }
         )
-    return JsonResponse({"experiment": experiment, "students": rows})
+    return rows
 
 
 @endpoint("GET", auth="admin")
@@ -465,3 +472,124 @@ def simulation(request):
     # Hardest first; setups nobody predicted go last; then the most used.
     scenarios.sort(key=lambda s: (s["accuracy"] if s["accuracy"] is not None else 101, -s["runs"]))
     return JsonResponse({"experiment": experiment, "lab": lab, "labs": dict(labs), "scenarios": scenarios})
+
+
+# ---- CSV export ----
+
+
+def _cell(value):
+    """Text for a CSV cell. Values that a spreadsheet would run as a formula get a leading quote."""
+    if value is None:
+        return ""
+    if hasattr(value, "isoformat"):
+        return timezone.localtime(value).strftime("%Y-%m-%d %H:%M")
+    text = str(value)
+    return "'" + text if text[:1] in ("=", "+", "-", "@", "\t", "\r") else text
+
+
+def _export_students(experiment):
+    levels = _posttest_levels(experiment)
+    header = ["Roll number", "Name", "Email", "Pretest first", "Pretest best", "Pretest attempts"]
+    for level in levels:
+        header += [f"Posttest {level} first", f"Posttest {level} best", f"Posttest {level} attempts"]
+    header += ["Simulation runs", "Predictions right %", "Rating", "Last seen"]
+    rows = []
+    for r in sorted(_student_rows(experiment), key=lambda r: (r["rollNumber"] is None, r["rollNumber"] or "", r["email"])):
+        row = [r["rollNumber"], r["name"], r["email"]]
+        for key in ["pretest:"] + [f"posttest:{level}" for level in levels]:
+            q = r["quizzes"].get(key)
+            row += [f"{q['first']['score']}/{q['first']['total']}", f"{q['best']['score']}/{q['best']['total']}", q["attempts"]] if q else ["", "", 0]
+        row += [r["simulationRuns"], r["predictionAccuracy"], r["rating"], r["lastSeen"]]
+        rows.append(row)
+    return header, rows
+
+
+def _posttest_levels(experiment):
+    from .question_keys import keys_for
+
+    keys = keys_for(experiment)
+    return keys["posttestLevels"] if keys else []
+
+
+def _export_attempts(experiment):
+    header = ["Roll number", "Email", "Test", "Level", "Score", "Total", "Percent", "Retake", "Duration (s)", "Submitted"]
+    rows = [
+        [a.student.roll_number, a.student.email, a.kind, a.level, a.score, a.total, _pct(a.score, a.total),
+         "yes" if a.retake else "no", a.duration_seconds, a.created_at]
+        for a in QuizAttempt.objects.filter(experiment=experiment).select_related("student").order_by("created_at", "pk")
+    ]
+    return header, rows
+
+
+def _export_answers(experiment):
+    from .models import QuizAnswer
+
+    header = ["Roll number", "Test", "Level", "Submitted", "Attempt ID", "Question ID", "Chosen option (0 = first)", "Correct"]
+    answers = (
+        QuizAnswer.objects.filter(attempt__experiment=experiment)
+        .select_related("attempt", "attempt__student")
+        .order_by("attempt__created_at", "attempt_id", "pk")
+    )
+    rows = [
+        [x.attempt.student.roll_number, x.attempt.kind, x.attempt.level, x.attempt.created_at, x.attempt_id,
+         x.question_id, x.chosen, "yes" if x.correct else "no"]
+        for x in answers
+    ]
+    return header, rows
+
+
+def _export_runs(experiment):
+    header = ["Roll number", "Email", "Lab", "When", "Setup (JSON)", "Prediction (JSON)", "Outcome (JSON)",
+              "Prediction right", "Steps viewed", "Steps total", "Used Run to end"]
+    rows = [
+        [r.student.roll_number, r.student.email, r.lab, r.created_at, json.dumps(r.config), json.dumps(r.prediction),
+         json.dumps(r.outcome), {True: "yes", False: "no", None: ""}[r.prediction_correct], r.steps_viewed,
+         r.steps_total, "yes" if r.used_run_to_end else "no"]
+        for r in SimulationRun.objects.filter(experiment=experiment).select_related("student").order_by("created_at", "pk")
+    ]
+    return header, rows
+
+
+def _export_feedback(experiment):
+    header = ["Roll number", "Email", "When", "Message"]
+    rows = [
+        [f.student.roll_number, f.student.email, f.created_at, f.message]
+        for f in Feedback.objects.filter(experiment=experiment).select_related("student").order_by("created_at", "pk")
+    ]
+    return header, rows
+
+
+def _export_bugs(experiment):
+    header = ["Status", "Roll number", "Email", "When", "Page", "Description"]
+    rows = [
+        [b.status, b.student.roll_number, b.student.email, b.created_at, b.page, b.description]
+        for b in BugReport.objects.filter(experiment=experiment).select_related("student").order_by("created_at", "pk")
+    ]
+    return header, rows
+
+
+EXPORTS = {
+    "students": _export_students,
+    "attempts": _export_attempts,
+    "answers": _export_answers,
+    "runs": _export_runs,
+    "feedback": _export_feedback,
+    "bugs": _export_bugs,
+}
+
+
+@endpoint("GET", auth="admin")
+def export(request):
+    experiment = _experiment(request)
+    table = get_query_choice(request, "table", list(EXPORTS))
+    header, rows = EXPORTS[table](experiment)
+    out = io.StringIO()
+    writer = csv.writer(out)
+    writer.writerow(header)
+    writer.writerows([_cell(v) for v in row] for row in rows)
+    # UTF-8 with a byte order mark, so Excel shows names and the en dash correctly.
+    response = HttpResponse("\ufeff" + out.getvalue(), content_type="text/csv; charset=utf-8")
+    stamp = timezone.localtime().strftime("%Y-%m-%d")
+    response["Content-Disposition"] = f'attachment; filename="{experiment}-{table}-{stamp}.csv"'
+    response["Cache-Control"] = "no-store"
+    return response
