@@ -143,20 +143,31 @@ ratings, feedback and bug reports. Students sign in in one of two ways:
 
 Without `VITE_API_URL` the site works exactly as before: no sign-in, nothing is sent.
 
-### Running it locally
+### Running it locally (first time on a new computer)
 
-Needs Python 3.12 or later.
+Needs Python 3.12 or later and Node 20.19 or later. Secrets and local data are not in git,
+so after cloning, each person creates their own:
 
 ```bash
+# 1. Site
+npm install
+copy .env.example .env.local
+
+# 2. Backend
 cd backend
 py -3.12 -m venv .venv
 .venv\Scripts\python -m pip install -r requirements.txt
 copy .env.example .env
 .venv\Scripts\python manage.py migrate
-.venv\Scripts\python manage.py runserver 127.0.0.1:8000
 ```
 
-Then, in the project root, copy `.env.example` to `.env.local` and run `npm run dev`.
+3. In `backend/.env`, set `STUDENT_SHARED_PASSWORD` (the class password for roll-number
+   sign-in) and, for the admin pages, `DEV_ADMIN_USERNAME` and `DEV_ADMIN_PASSWORD`.
+4. Optional demo data and the local admin account:
+   `.venv\Scripts\python manage.py seed_demo`
+5. Run both, in two terminals: `.venv\Scripts\python manage.py runserver 127.0.0.1:8000`
+   (in `backend/`) and `npm run dev` (in the project root). The lab is at
+   `http://localhost:5173`, the admin pages at `http://localhost:5173/#/admin`.
 Locally the data goes to `backend/db.sqlite3`. With `DEV_LOGIN=1` (backend) and
 `VITE_DEV_LOGIN=1` (site), the sign-in popup also has a test form that signs in as any
 email without Google; it only works with `DJANGO_DEBUG=1` and is left out of production
@@ -273,7 +284,6 @@ items marked in it.
 | Item | Where |
 | --- | --- |
 | Developer names, emails and IDs (4 rows); Subject Matter Experts table | `data/contributors.js` |
-| Branch code names for the admin pages (only 101 = Computer Engineering known) | `backend/labs/models.py` |
 | Google Form URL for the Feedback tab (optional now that feedback is built in), and the sign-off name | `src/config/site.js` |
 | Breadcrumb links (Computer Science and Engineering, Python, Django) | `meta.js` |
 | Diagrams: Figure 1 is in (`cycle-overview.gif`), its source and author still needed; Figures 2–4 still needed (`middleware-onion.png`, `middleware-hooks-flow.png`, `url-resolution.png`) | `public/diagrams/`, `tabs/Theory.jsx` |
