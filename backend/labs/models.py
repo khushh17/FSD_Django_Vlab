@@ -17,26 +17,18 @@ def roll_parts(roll_number):
 
 
 class Student(models.Model):
-    """
-    A student. They sign in with their roll number and the class password, or with Google
-    (then they enter their roll number once). A Google account that enters an existing roll
-    number is joined to that student, so both ways reach the same records.
-    """
+    """A student. They sign in with their roll number and the class password."""
 
-    google_sub = models.CharField("Google account ID", max_length=255, unique=True, null=True, blank=True)
-    email = models.EmailField(unique=True, null=True, blank=True)
+    roll_number = models.CharField(max_length=20, unique=True, validators=[roll_number_validator])
     name = models.CharField(max_length=200, blank=True)
-    roll_number = models.CharField(
-        max_length=20, unique=True, null=True, blank=True, validators=[roll_number_validator]
-    )
     created_at = models.DateTimeField(auto_now_add=True)
     last_seen_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
-        ordering = ["roll_number", "email"]
+        ordering = ["roll_number"]
 
     def __str__(self):
-        return f"{self.roll_number or '(no roll number)'} {self.email or self.name}".strip()
+        return f"{self.roll_number} {self.name}".strip()
 
 
 class Event(models.Model):

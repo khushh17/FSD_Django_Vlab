@@ -1,6 +1,5 @@
 import json
 import uuid
-from unittest import mock
 
 from django.test import TestCase, override_settings
 
@@ -9,11 +8,6 @@ from .models import BugReport, Feedback, QuizAttempt, Rating, SimulationRun, Stu
 
 EXP = "django-request-response"
 SITE = "http://localhost:5173"
-
-
-def claims(**overrides):
-    base = {"sub": "123", "email": "asha@somaiya.edu", "email_verified": True, "hd": "somaiya.edu", "name": "Asha"}
-    return {**base, **overrides}
 
 
 class ApiTestCase(TestCase):
@@ -33,59 +27,9 @@ class ApiTestCase(TestCase):
         headers = {"HTTP_AUTHORIZATION": f"Bearer {token}"} if token else {}
         return self.client.get(url, **headers)
 
-    def make_student(self, roll="16010121001", email="asha@somaiya.edu"):
-        student = Student.objects.create(google_sub=f"sub-{email}", email=email, name="Asha", roll_number=roll)
+    def make_student(self, roll="16010121001", name="Asha"):
+        student = Student.objects.create(roll_number=roll, name=name)
         return student, make_token(student)
-
-
-@override_settings(GOOGLE_CLIENT_ID="client-id.apps.googleusercontent.com", ALLOWED_EMAIL_DOMAIN="somaiya.edu")
-class GoogleSignInTests(ApiTestCase):
-    def sign_in(self, token_claims=None, error=None):
-        target = "google.oauth2.id_token.verify_oauth2_token"
-        side = {"side_effect": error} if error else {"return_value": token_claims}
-        with mock.patch(target, **side) as verify:
-            response = self.post("/api/auth/google", {"credential": "jwt"})
-        return response, verify
-
-    def test_university_account_signs_in_and_gets_a_token(self):
-        response, verify = self.sign_in(claims())
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(verify.call_args.args[2], "client-id.apps.googleusercontent.com")  # audience checked
-        body = response.json()
-        self.assertEqual(body["student"], {"email": "asha@somaiya.edu", "name": "Asha", "rollNumber": None})
-        me = self.get("/api/me", body["token"])
-        self.assertEqual(me.status_code, 200)
-
-    def test_same_google_account_is_one_student(self):
-        self.sign_in(claims())
-        self.sign_in(claims(name="Asha P."))
-        self.assertEqual(Student.objects.count(), 1)
-        self.assertEqual(Student.objects.get().name, "Asha P.")
-
-    def test_personal_account_with_university_address_is_rejected(self):
-        response, _ = self.sign_in(claims(hd=None))
-        self.assertEqual(response.status_code, 403)
-        self.assertEqual(Student.objects.count(), 0)
-
-    def test_other_domain_is_rejected(self):
-        response, _ = self.sign_in(claims(email="x@gmail.com", hd=None))
-        self.assertEqual(response.status_code, 403)
-        response, _ = self.sign_in(claims(email="x@other.edu", hd="other.edu"))
-        self.assertEqual(response.status_code, 403)
-
-    def test_unverified_email_is_rejected(self):
-        response, _ = self.sign_in(claims(email_verified=False))
-        self.assertEqual(response.status_code, 403)
-
-    def test_invalid_token_is_rejected(self):
-        response, _ = self.sign_in(error=ValueError("bad signature"))
-        self.assertEqual(response.status_code, 403)
-        self.assertEqual(response.json()["error"], "sign_in_rejected")
-
-    @override_settings(GOOGLE_CLIENT_ID="")
-    def test_not_configured(self):
-        response = self.post("/api/auth/google", {"credential": "jwt"})
-        self.assertEqual(response.status_code, 403)
 
 
 class TokenTests(ApiTestCase):
@@ -104,18 +48,6 @@ class TokenTests(ApiTestCase):
             self.assertEqual(self.get("/api/me", token).status_code, 401)
 
 
-class DevSignInTests(ApiTestCase):
-    @override_settings(DEV_LOGIN=False)
-    def test_disabled_by_default(self):
-        self.assertEqual(self.post("/api/auth/dev", {"email": "a@b.c"}).status_code, 404)
-
-    @override_settings(DEV_LOGIN=True)
-    def test_enabled(self):
-        response = self.post("/api/auth/dev", {"email": "Test@Somaiya.edu", "name": "Test"})
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()["student"]["email"], "test@somaiya.edu")
-
-
 @override_settings(STUDENT_SHARED_PASSWORD="class-password")
 class RollSignInTests(ApiTestCase):
     def sign_in(self, roll="16010125804", password="class-password", **extra):
@@ -124,7 +56,7 @@ class RollSignInTests(ApiTestCase):
     def test_first_sign_in_creates_the_student(self):
         response = self.sign_in(name="Asha")
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()["student"], {"email": None, "name": "Asha", "rollNumber": "16010125804"})
+        self.assertEqual(response.json()["student"], {"name": "Asha", "rollNumber": "16010125804"})
         me = self.get("/api/me", response.json()["token"]).json()
         self.assertEqual(me["student"]["rollNumber"], "16010125804")
 
@@ -155,33 +87,6 @@ class RollSignInTests(ApiTestCase):
         response = self.sign_in(password="anything")
         self.assertEqual(response.status_code, 503)
 
-    def test_google_account_joins_the_roll_number_student(self):
-        roll_token = self.sign_in(name="Asha").json()["token"]
-        self.post("/api/events", {"events": [quiz_event()]}, roll_token)
-        self.post("/api/ratings", {"experiment": EXP, "stars": 3}, roll_token)
-        google = Student.objects.create(google_sub="g-1", email="asha@somaiya.edu", name="Asha P")
-        google_token = make_token(google)
-        self.post("/api/ratings", {"experiment": EXP, "stars": 5}, google_token)  # rated before the roll number
-        response = self.post("/api/me/roll-number", {"roll_number": "16010125804"}, google_token)
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()["student"], {"email": "asha@somaiya.edu", "name": "Asha", "rollNumber": "16010125804"})
-        self.assertEqual(Student.objects.count(), 1)
-        student = Student.objects.get()
-        self.assertEqual((student.google_sub, student.quizattempts.count()), ("g-1", 1))
-        self.assertEqual(Rating.objects.get().stars, 3)  # the roll-number student's own rating is kept
-        # The old Google-only token no longer works; the new one does.
-        self.assertEqual(self.get("/api/me", google_token).status_code, 401)
-        self.assertEqual(self.get("/api/me", response.json()["token"]).status_code, 200)
-
-    def test_two_google_accounts_cannot_share_a_roll_number(self):
-        self.sign_in()
-        first = Student.objects.create(google_sub="g-1", email="a@somaiya.edu")
-        self.post("/api/me/roll-number", {"roll_number": "16010125804"}, make_token(first))
-        second = Student.objects.create(google_sub="g-2", email="b@somaiya.edu")
-        response = self.post("/api/me/roll-number", {"roll_number": "16010125804"}, make_token(second))
-        self.assertEqual(response.status_code, 409)
-
-
 class RateLimitTests(ApiTestCase):
     def test_feedback_is_limited(self):
         _, token = self.make_student()
@@ -191,31 +96,6 @@ class RateLimitTests(ApiTestCase):
         ]
         self.assertEqual(codes[:20], [201] * 20)
         self.assertEqual(codes[20], 429)
-
-
-class RollNumberTests(ApiTestCase):
-    def test_set_once(self):
-        student, token = self.make_student(roll=None)
-        response = self.post("/api/me/roll-number", {"roll_number": " 16010121001 "}, token)
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()["student"]["rollNumber"], "16010121001")
-        again = self.post("/api/me/roll-number", {"roll_number": "16010121002"}, token)
-        self.assertEqual(again.status_code, 409)
-        student.refresh_from_db()
-        self.assertEqual(student.roll_number, "16010121001")
-
-    def test_invalid(self):
-        _, token = self.make_student(roll=None)
-        for roll in ["", "ab", "has space", "x" * 21, "<script>", "26010121001", "1601012100", "160101210011", "1601012100a"]:
-            response = self.post("/api/me/roll-number", {"roll_number": roll}, token)
-            self.assertEqual(response.status_code, 400, roll)
-
-    def test_taken(self):
-        self.make_student(roll="16010121001", email="a@somaiya.edu")
-        _, token = self.make_student(roll=None, email="b@somaiya.edu")
-        response = self.post("/api/me/roll-number", {"roll_number": "16010121001"}, token)
-        self.assertEqual(response.status_code, 409)
-        self.assertEqual(response.json()["error"], "roll_number_taken")
 
 
 def quiz_event(**data_overrides):
@@ -324,12 +204,8 @@ class EventTests(ApiTestCase):
         self.assertEqual(self.post("/api/events", {"events": []}, self.token).status_code, 400)
         self.assertEqual(self.post("/api/events", {"events": [quiz_event() for _ in range(51)]}, self.token).status_code, 400)
 
-    def test_needs_sign_in_and_roll_number(self):
+    def test_needs_sign_in(self):
         self.assertEqual(self.post("/api/events", {"events": [quiz_event()]}).status_code, 401)
-        _, token = self.make_student(roll=None, email="new@somaiya.edu")
-        response = self.send(quiz_event(), token=token)
-        self.assertEqual(response.status_code, 403)
-        self.assertEqual(response.json()["error"], "roll_number_required")
 
     def test_invalid_json_and_method(self):
         response = self.client.post("/api/events", "{oops", content_type="application/json", HTTP_AUTHORIZATION=f"Bearer {self.token}")
@@ -350,7 +226,7 @@ class FormTests(ApiTestCase):
 
     def test_rating_summary_is_public(self):
         self.assertEqual(self.get(f"/api/ratings/summary?experiment={EXP}").json(), {"experiment": EXP, "average": None, "count": 0})
-        other, other_token = self.make_student("R009", "z@somaiya.edu")
+        other, other_token = self.make_student("16010125009")
         self.post("/api/ratings", {"experiment": EXP, "stars": 4}, self.token)
         self.post("/api/ratings", {"experiment": EXP, "stars": 5}, other_token)
         response = self.get(f"/api/ratings/summary?experiment={EXP}")
@@ -467,9 +343,9 @@ class AdminApiTests(AdminTestBase):
         self.assertEqual(self.get("/api/me", self.token).status_code, 401)  # and the other way round
 
     def test_overview_and_learning_gain(self):
-        a, _ = self.make_student("R001", "a@somaiya.edu")
-        b, _ = self.make_student("R002", "b@somaiya.edu")
-        self.make_student("R003", "c@somaiya.edu")  # signed in, did nothing
+        a, _ = self.make_student("16010125001")
+        b, _ = self.make_student("16010125002")
+        self.make_student("16010125003")  # signed in, did nothing
         # a: pretest 1/4 then a retake 4/4; posttest easy 3/4 -> gain uses the first attempts: 25 -> 75
         self.attempt(a, "pretest", "", [("q1", 0, True), ("q2", 1, False), ("q3", 1, False), ("q4", 1, False)], when=1)
         self.attempt(a, "pretest", "", [("q1", 0, True), ("q2", 0, True), ("q3", 0, True), ("q4", 0, True)], when=2)
@@ -491,11 +367,11 @@ class AdminApiTests(AdminTestBase):
         self.assertEqual(o["ratings"]["distribution"]["5"], 1)
 
     def test_students_and_detail(self):
-        a, _ = self.make_student("R001", "a@somaiya.edu")
+        a, _ = self.make_student("16010125001")
         self.attempt(a, "pretest", "", [("q1", 0, True), ("q2", 1, False)], when=1)
         self.attempt(a, "pretest", "", [("q1", 0, True), ("q2", 0, True)], when=2)
         rows = self.get("/api/admin/students", self.token).json()["students"]
-        row = next(r for r in rows if r["rollNumber"] == "R001")
+        row = next(r for r in rows if r["rollNumber"] == "16010125001")
         self.assertEqual(row["quizzes"]["pretest:"]["first"]["percent"], 50.0)
         self.assertEqual(row["quizzes"]["pretest:"]["best"]["percent"], 100.0)
         self.assertEqual(row["quizzes"]["pretest:"]["attempts"], 2)
@@ -505,8 +381,8 @@ class AdminApiTests(AdminTestBase):
         self.assertEqual(self.get("/api/admin/students/99999", self.token).status_code, 404)
 
     def test_quiz_analysis_first_and_all(self):
-        a, _ = self.make_student("R001", "a@somaiya.edu")
-        b, _ = self.make_student("R002", "b@somaiya.edu")
+        a, _ = self.make_student("16010125001")
+        b, _ = self.make_student("16010125002")
         self.attempt(a, "posttest", "easy", [("p1", 2, False), ("p2", 0, True)], when=1)
         self.attempt(a, "posttest", "easy", [("p1", 1, True), ("p2", 0, True)], when=2)
         self.attempt(b, "posttest", "easy", [("p1", 2, False), ("p2", None, False)], when=3)
@@ -525,12 +401,12 @@ class AdminApiTests(AdminTestBase):
         self.assertEqual(self.get("/api/admin/quiz?kind=midterm", self.token).status_code, 400)
 
     def test_feedback_and_bug_inboxes(self):
-        a, token = self.make_student("R001", "a@somaiya.edu")
+        a, token = self.make_student("16010125001")
         self.post("/api/feedback", {"id": str(uuid.uuid4()), "experiment": EXP, "message": "First"}, token)
         self.post("/api/feedback", {"id": str(uuid.uuid4()), "experiment": EXP, "message": "Second"}, token)
         feedback = self.get("/api/admin/feedback", self.token).json()["feedback"]
         self.assertEqual([f["message"] for f in feedback], ["Second", "First"])  # newest first
-        self.assertEqual(feedback[0]["student"]["rollNumber"], "R001")
+        self.assertEqual(feedback[0]["student"]["rollNumber"], "16010125001")
 
         self.post("/api/bug-reports", {"id": str(uuid.uuid4()), "experiment": EXP, "page": "aim", "description": "Typo"}, token)
         bugs = self.get("/api/admin/bugs", self.token).json()
@@ -545,8 +421,8 @@ class AdminApiTests(AdminTestBase):
         self.assertEqual(self.post(f"/api/admin/bugs/{bug_id}", {"status": "open"}, token).status_code, 401)  # students cannot
 
     def test_simulation_grouped_by_setup(self):
-        _, ta = self.make_student("R001", "a@somaiya.edu")
-        _, tb = self.make_student("R002", "b@somaiya.edu")
+        _, ta = self.make_student("16010125001")
+        _, tb = self.make_student("16010125002")
         csrf = {"config": {"middleware": ["csrf"], "request": "postNoToken", "view": "render"}}
         get = {"config": {"middleware": ["csrf"], "request": "get", "view": "render"}}
         wrong = {"prediction": {"status": "200", "viewRuns": "yes"}, "predictionCorrect": False}
@@ -605,13 +481,13 @@ class ExportTests(AdminTestBase):
         return list(csv.reader(io.StringIO(text[1:])))
 
     def test_students_and_attempts(self):
-        a, _ = self.make_student("R001", "a@somaiya.edu")
+        a, _ = self.make_student("16010125001")
         self.attempt(a, "pretest", "", [("q1", 0, True), ("q2", 1, False)], when=1)
         self.attempt(a, "posttest", "hard", [("h1", 0, True)], when=2)
         rows = self.csv_rows("students")
-        self.assertEqual(rows[0][:6], ["Roll number", "Name", "Email", "Pretest first", "Pretest best", "Pretest attempts"])
-        row = next(r for r in rows if r[0] == "R001")
-        self.assertEqual(row[3:6], ["1/2", "1/2", "1"])
+        self.assertEqual(rows[0][:5], ["Roll number", "Name", "Pretest first", "Pretest best", "Pretest attempts"])
+        row = next(r for r in rows if r[0] == "16010125001")
+        self.assertEqual(row[2:5], ["1/2", "1/2", "1"])
         hard = rows[0].index("Posttest hard best")
         self.assertEqual(row[hard], "1/1")
         attempts = self.csv_rows("attempts")
@@ -619,7 +495,7 @@ class ExportTests(AdminTestBase):
         self.assertEqual(len(self.csv_rows("answers")), 1 + 3)
 
     def test_formulas_are_neutralised(self):
-        _, token = self.make_student("R001", "a@somaiya.edu")
+        _, token = self.make_student("16010125001")
         self.post("/api/feedback", {"id": str(uuid.uuid4()), "experiment": EXP, "message": '=HYPERLINK("http://x")'}, token)
         rows = self.csv_rows("feedback")
         self.assertEqual(rows[1][3], '\'=HYPERLINK("http://x")')

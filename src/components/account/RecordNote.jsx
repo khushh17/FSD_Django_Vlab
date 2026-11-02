@@ -17,12 +17,11 @@ export default function RecordNote({ recorded, what }) {
       </p>
     )
   }
-  const action = status === 'signed-in' ? 'Add your roll number' : 'Sign in'
   return (
     <p className={styles.note}>
       This {what} was not saved.{' '}
       <button type="button" className={styles.link} onClick={() => requestSignIn()}>
-        {action}
+        Sign in
       </button>{' '}
       to save the next one.
     </p>

@@ -30,7 +30,7 @@ export default function BugReports() {
     try {
       await call(`/api/admin/bugs/${bug.id}`, { status: next })
       setChanged((prev) => ({ ...prev, [bug.id]: next }))
-      setMessage({ text: `Report from ${bug.student.rollNumber ?? bug.student.email} marked ${next}.`, error: false })
+      setMessage({ text: `Report from ${bug.student.rollNumber} marked ${next}.`, error: false })
     } catch (err) {
       setMessage({ text: `Could not update the report: ${err.message}`, error: true })
     }
@@ -82,7 +82,7 @@ export default function BugReports() {
                     <span className={current === 'fixed' ? styles.badgeFixed : styles.badgeOpen}>{capitalise(current)}</span>{' '}
                     {when(bug.createdAt)} · {bug.page ? `${capitalise(bug.page)} page` : 'page not recorded'} ·{' '}
                     <Link to={`/admin/students/${bug.student.id}?exp=${experiment.slug}`}>
-                      {bug.student.rollNumber ?? bug.student.email}
+                      {bug.student.rollNumber}
                     </Link>
                   </p>
                   <button

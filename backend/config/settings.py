@@ -153,11 +153,6 @@ CORS_ALLOWED_ORIGINS = env_list(
 # Experiments that may send data. Each student adds their experiment's slug (from its meta.js).
 LAB_EXPERIMENTS = ["django-request-response"]
 
-# Google sign-in: the OAuth client ID from Google Cloud Console (TODO: create one).
-GOOGLE_CLIENT_ID = env("GOOGLE_CLIENT_ID")
-# Only Google Workspace accounts on this domain may sign in. TODO: confirm the students' domain.
-ALLOWED_EMAIL_DOMAIN = env("ALLOWED_EMAIL_DOMAIN", "somaiya.edu")
-
 # Roll-number sign-in: every student uses their roll number and this one class password.
 # Set it in backend/.env (and in Vercel's settings); empty switches roll-number sign-in off.
 STUDENT_SHARED_PASSWORD = env("STUDENT_SHARED_PASSWORD")
@@ -174,6 +169,3 @@ ADMIN_TOKEN_MAX_AGE = 12 * 60 * 60
 ADMIN_MAX_FAILED_LOGINS = 5
 ADMIN_LOCKOUT_SECONDS = 15 * 60
 
-# Local testing without Google: POST /api/auth/dev signs in any email. Never on the server:
-# it needs both DEBUG and DEV_LOGIN=1.
-DEV_LOGIN = DEBUG and env("DEV_LOGIN") == "1"

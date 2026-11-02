@@ -22,9 +22,10 @@ npm run deploy     # build, then publish dist/ to the gh-pages branch
 
 ## Deploying
 
-The site and the backend go on Vercel: follow [DEPLOY.md](DEPLOY.md). The steps below
-put the site alone on GitHub Pages; that works only without the backend (no sign-in, no
-records), because GitHub Pages cannot run Django.
+For now the project is a **local demo**: it is not deployed anywhere. If it is deployed
+later, [DEPLOY.md](DEPLOY.md) describes Vercel (site and backend). The steps below put the
+site alone on GitHub Pages; that works only without the backend (no sign-in, no records),
+because GitHub Pages cannot run Django.
 
 ### GitHub Pages (site only)
 
@@ -131,15 +132,13 @@ Run these again after changing an engine, or after a new Django release.
 
 `backend/` is a Django project that stores what students do on the site: pretest and
 posttest attempts (with every answer), simulation runs (setup, prediction, outcome),
-ratings, feedback and bug reports. Students sign in in one of two ways:
+ratings, feedback and bug reports.
 
-- **Roll number + class password.** The roll number is 11 digits: `160`, a 3-digit branch
-  (101 = Computer Engineering), a 2-digit year and a 3-digit serial, for example
-  `16010125804`. Every student uses the same password, `STUDENT_SHARED_PASSWORD` in
-  `backend/.env` (empty switches this sign-in off).
-- **Google**, limited to `@somaiya.edu` accounts, once the OAuth client ID is set. The student
-  enters their roll number once; if that roll number already signed in with the password,
-  the Google account is joined to the same student and records.
+Students sign in with their **roll number and the class password**. The roll number is 11
+digits: `160`, a 3-digit branch (101 = Computer Engineering), a 2-digit year and a 3-digit
+serial, for example `16010125804`. Every student uses the same password,
+`STUDENT_SHARED_PASSWORD` in `backend/.env` (empty switches sign-in off). The first
+sign-in creates the student; the name is optional.
 
 Without `VITE_API_URL` the site works exactly as before: no sign-in, nothing is sent.
 
@@ -161,20 +160,16 @@ copy .env.example .env
 .venv\Scripts\python manage.py migrate
 ```
 
-3. In `backend/.env`, set `STUDENT_SHARED_PASSWORD` (the class password for roll-number
-   sign-in) and, for the admin pages, `DEV_ADMIN_USERNAME` and `DEV_ADMIN_PASSWORD`.
+3. `backend/.env` now has demo values: class password `class-demo-123`, admin `admin` /
+   `admin-demo-123`. Change them there if you like.
 4. Optional demo data and the local admin account:
    `.venv\Scripts\python manage.py seed_demo`
 5. Run both, in two terminals: `.venv\Scripts\python manage.py runserver 127.0.0.1:8000`
    (in `backend/`) and `npm run dev` (in the project root). The lab is at
    `http://localhost:5173`, the admin pages at `http://localhost:5173/#/admin`.
-Locally the data goes to `backend/db.sqlite3`. With `DEV_LOGIN=1` (backend) and
-`VITE_DEV_LOGIN=1` (site), the sign-in popup also has a test form that signs in as any
-email without Google; it only works with `DJANGO_DEBUG=1` and is left out of production
-builds.
 
-`npm run build` also reads `.env.local`, so a local build points at `127.0.0.1:8000`. On
-Vercel, set the variables in the project settings instead.
+Locally the data goes to `backend/db.sqlite3`. `npm run build` also reads `.env.local`, so a
+local build points at `127.0.0.1:8000`.
 
 ### Admin
 
@@ -224,10 +219,7 @@ demo students again. It needs Node, which it uses to read the question banks
 | Endpoint | What it does |
 | --- | --- |
 | `POST /api/auth/roll` | Roll number + class password; creates the student on first sign-in |
-| `POST /api/auth/google` | Checks the Google ID token (`hd` must be the university domain); returns a sign-in token |
-| `POST /api/auth/dev` | Test sign-in (only with `DJANGO_DEBUG=1` and `DEV_LOGIN=1`) |
 | `GET /api/me` | The student and their ratings |
-| `POST /api/me/roll-number` | Google sign-ins: saves the roll number (once; the admin can change it later), or joins an existing roll-number student |
 | `POST /api/events` | Quiz attempts and simulation runs, up to 50 per request |
 | `POST /api/ratings`, `/api/feedback`, `/api/bug-reports` | The Rate Me, Feedback and Report a Bug forms |
 | `GET /api/ratings/summary?experiment=` | Public: the average rating shown in the header |
@@ -250,11 +242,9 @@ backend\.venv\Scripts\python backend\manage.py test labs
   cannot be made up. The answers are still in the site's code (the quiz shows explanations
   after submitting), so a determined student could look them up before answering.
 - With one class password, anyone who knows it can sign in as any roll number. That is fine
-  for a class, not for marks that matter; Google sign-in (one account per student) is the
-  stronger option once it is set up.
+  for a class demo, not for marks that matter.
 - Rate limits (sign-in attempts, records, feedback, bug reports) and lockouts are counted in
-  Django's cache, which on Vercel is per server instance, so they slow abuse rather than
-  stop it completely.
+  Django's cache (per server process), so they slow abuse rather than stop it completely.
 - Signing out does not cancel an issued token; it just expires after 7 days.
 
 ## Accessibility
@@ -274,10 +264,8 @@ items marked in it.
 
 | Item | Where / how |
 | --- | --- |
-| Choose the class password and put it in `STUDENT_SHARED_PASSWORD` (a random local test value is there now) | `backend/.env`, later Vercel settings |
-| Optional: create the Google OAuth client ID (free, no billing needed) and put it in `GOOGLE_CLIENT_ID` and `VITE_GOOGLE_CLIENT_ID`. Roll-number sign-in works without it | Google Cloud Console; `backend/.env`, `.env.local`, later Vercel settings |
-| Create the professor's admin account | On Vercel: the `DJANGO_SUPERUSER_*` variables (DEPLOY.md, step 2). Locally: `createsuperuser` |
-| Remove the demo data before real use (local database only) | `backend\.venv\Scripts\python backend\manage.py seed_demo --clear` |
+| Optional: change the demo class password and admin password | `backend/.env` (`STUDENT_SHARED_PASSWORD`, `DEV_ADMIN_PASSWORD`, then run `seed_demo` again) |
+| Optional: remove the demo students before a real class uses it | `backend\.venv\Scripts\python backend\manage.py seed_demo --clear` |
 
 ### Content (waiting on the professor)
 
@@ -292,18 +280,11 @@ items marked in it.
 | Favicon | `index.html` |
 | Report a Bug: optional external URL (otherwise the built-in form is used) | `meta.js` |
 
-### Deployment (Vercel + Neon)
-
-| Item | Notes |
-| --- | --- |
-| Follow [DEPLOY.md](DEPLOY.md): two Vercel projects (site, and `backend/`), Neon Postgres, environment variables | The config files are written; migrations and the admin account run in the backend's build |
-| Add the Vercel site address to the Google OAuth client's allowed origins | Google Cloud Console |
-| First live test: roll-number sign-in, records and the admin pages on the live site; Google sign-in once its ID is set | DEPLOY.md, step 5 |
-
 ### Later features (phase 4 and after)
 
 | Item | Notes |
 | --- | --- |
+| Deploying (not planned for now) | [DEPLOY.md](DEPLOY.md) |
 | Landing page listing every experiment; merge other students' experiments | `src/experiments/registry.js`, `LAB_EXPERIMENTS` in `backend/config/settings.py` |
 | A shared store (for example Redis) for rate limits, if they ever need to be strict | See Known limits |
 | Students list currently shows every signed-in student, also those from other experiments | Filter by class or experiment once there are several |

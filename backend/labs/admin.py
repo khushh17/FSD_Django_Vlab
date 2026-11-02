@@ -20,11 +20,11 @@ class ReadOnlyAdmin(admin.ModelAdmin):
 
 @admin.register(Student)
 class StudentAdmin(admin.ModelAdmin):
-    list_display = ["roll_number", "name", "email", "created_at", "last_seen_at"]
-    search_fields = ["roll_number", "name", "email"]
+    list_display = ["roll_number", "name", "created_at", "last_seen_at"]
+    search_fields = ["roll_number", "name"]
     # The roll number can be corrected here (students cannot change it themselves).
-    fields = ["roll_number", "name", "email", "google_sub", "created_at", "last_seen_at"]
-    readonly_fields = ["name", "email", "google_sub", "created_at", "last_seen_at"]
+    fields = ["roll_number", "name", "created_at", "last_seen_at"]
+    readonly_fields = ["created_at", "last_seen_at"]
 
     def has_add_permission(self, request):
         return False
@@ -45,7 +45,7 @@ class QuizAnswerInline(admin.TabularInline):
 class QuizAttemptAdmin(ReadOnlyAdmin):
     list_display = ["created_at", "student", "experiment", "kind", "level", "score", "total", "retake", "duration_seconds"]
     list_filter = ["experiment", "kind", "level", "retake"]
-    search_fields = ["student__roll_number", "student__email", "student__name"]
+    search_fields = ["student__roll_number", "student__name"]
     date_hierarchy = "created_at"
     inlines = [QuizAnswerInline]
 
@@ -61,7 +61,7 @@ class QuizAnswerAdmin(ReadOnlyAdmin):
 class SimulationRunAdmin(ReadOnlyAdmin):
     list_display = ["created_at", "student", "experiment", "lab", "prediction_correct", "steps_viewed", "steps_total", "used_run_to_end"]
     list_filter = ["experiment", "lab", "prediction_correct", "used_run_to_end"]
-    search_fields = ["student__roll_number", "student__email", "student__name"]
+    search_fields = ["student__roll_number", "student__name"]
     date_hierarchy = "created_at"
 
 
@@ -69,14 +69,14 @@ class SimulationRunAdmin(ReadOnlyAdmin):
 class RatingAdmin(ReadOnlyAdmin):
     list_display = ["updated_at", "student", "experiment", "stars"]
     list_filter = ["experiment", "stars"]
-    search_fields = ["student__roll_number", "student__email"]
+    search_fields = ["student__roll_number", "student__name"]
 
 
 @admin.register(Feedback)
 class FeedbackAdmin(ReadOnlyAdmin):
     list_display = ["created_at", "student", "experiment", "message"]
     list_filter = ["experiment"]
-    search_fields = ["message", "student__roll_number", "student__email"]
+    search_fields = ["message", "student__roll_number", "student__name"]
     date_hierarchy = "created_at"
 
 
@@ -85,7 +85,7 @@ class BugReportAdmin(admin.ModelAdmin):
     list_display = ["created_at", "status", "experiment", "page", "description", "student"]
     list_filter = ["status", "experiment", "page"]
     list_editable = ["status"]
-    search_fields = ["description", "student__roll_number", "student__email"]
+    search_fields = ["description", "student__roll_number", "student__name"]
     fields = ["status", "experiment", "page", "description", "student", "client_id", "created_at"]
     readonly_fields = ["experiment", "page", "description", "student", "client_id", "created_at"]
 

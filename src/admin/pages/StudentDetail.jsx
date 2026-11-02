@@ -24,11 +24,10 @@ export default function StudentDetail() {
       <LoadState loading={loading} error={error} />
       {data && (
         <>
-          <h1 className={styles.title}>{data.student.rollNumber ?? data.student.email}</h1>
+          <h1 className={styles.title}>{data.student.rollNumber}</h1>
           <Stats
             items={[
               { label: 'Name', value: data.student.name || '—' },
-              { label: 'Email', value: data.student.email ?? '— (roll-number sign-in)' },
               { label: 'First signed in', value: when(data.student.createdAt) },
               { label: 'Last seen', value: when(data.student.lastSeen) },
               { label: 'Rating', value: data.rating ?? '—' },

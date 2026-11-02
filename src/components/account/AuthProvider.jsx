@@ -8,16 +8,15 @@ import SignInDialog from './SignInDialog.jsx'
 const KEY = 'django-vlab:auth' // { token, student }
 
 /**
- * Student sign-in (Google), shared by the whole site.
+ * Student sign-in (roll number + class password), shared by the whole site.
  *   status: 'disabled' (no backend configured) | 'signed-out' | 'signed-in'
- *   student: { email, name, rollNumber } while signed in
- *   ready: signed in and the roll number is saved, so records can be sent
+ *   student: { name, rollNumber } while signed in
+ *   ready: signed in, so records can be sent
  */
 export function AuthProvider({ children }) {
   const [saved, setSaved] = useState(() => (backendEnabled ? readStored(KEY) : null))
   const [ratings, setRatings] = useState({})
   const [dialog, setDialog] = useState(null) // { reason } while the sign-in dialog is open
-  const [rollDismissed, setRollDismissed] = useState(false)
 
   const token = saved?.token ?? null
   const student = saved?.student ?? null
@@ -31,10 +30,8 @@ export function AuthProvider({ children }) {
 
   const signOut = useCallback(async () => {
     await flush() // send what is waiting while the token is still valid
-    window.google?.accounts?.id?.disableAutoSelect()
     store(null)
     setRatings({})
-    setRollDismissed(false)
     setDialog(null)
   }, [store])
 
@@ -87,34 +84,24 @@ export function AuthProvider({ children }) {
       requestSignIn: (reason = null) => setDialog({ reason }),
       rollSignIn: (rollNumber, password, name) =>
         signIn('/api/auth/roll', { roll_number: rollNumber, password, name }),
-      signInWithGoogle: (credential) => signIn('/api/auth/google', { credential }),
-      devSignIn: (email, name) => signIn('/api/auth/dev', { email, name }),
       signOut,
-      async saveRollNumber(rollNumber) {
-        // A new token: the Google account may have been joined to an existing roll-number student.
-        const result = await apiFetch('/api/me/roll-number', { method: 'POST', token, body: { roll_number: rollNumber } })
-        store(result)
-      },
       async rate(experiment, stars) {
         await apiFetch('/api/ratings', { method: 'POST', token, body: { experiment, stars } })
         setRatings((prev) => ({ ...prev, [experiment]: stars }))
       },
       /** POST a form the student waits for (feedback, bug report). */
       submit: (path, body) => apiFetch(path, { method: 'POST', token, body }),
-      /** Queue a background record; false if it cannot be recorded (not signed in / no roll number). */
+      /** Queue a background record; false if it cannot be recorded (not signed in). */
       record: (type, experiment, data) => (ready ? enqueue(type, experiment, data) : false),
     }),
-    [status, student, ready, ratings, signIn, signOut, store, token],
+    [status, student, ready, ratings, signIn, signOut, token],
   )
 
-  // Signed in but no roll number yet: ask for it straight away (once per page load if closed).
-  const needsRoll = status === 'signed-in' && student && !student.rollNumber && !rollDismissed
-  // A requested sign-in closes by itself once the student is signed in with a roll number.
-  const showDialog = (dialog !== null && !ready) || needsRoll
+  // A requested sign-in closes by itself once the student is signed in.
+  const showDialog = dialog !== null && !ready
 
   function closeDialog() {
     setDialog(null)
-    if (needsRoll) setRollDismissed(true)
   }
 
   return (

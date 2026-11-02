@@ -233,7 +233,6 @@ def _student_rows(experiment):
                 "id": s.pk,
                 "rollNumber": s.roll_number,
                 "name": s.name,
-                "email": s.email,
                 "lastSeen": s.last_seen_at,
                 "quizzes": {
                     f"{kind}:{level}": {
@@ -261,7 +260,7 @@ def student_detail(request, student_id):
     runs = SimulationRun.objects.filter(student=s, experiment=experiment).order_by("-created_at")
     return JsonResponse(
         {
-            "student": {"id": s.pk, "rollNumber": s.roll_number, "name": s.name, "email": s.email,
+            "student": {"id": s.pk, "rollNumber": s.roll_number, "name": s.name,
                         "createdAt": s.created_at, "lastSeen": s.last_seen_at},
             "attempts": [
                 {
@@ -357,7 +356,7 @@ def quiz(request):
 
 
 def _student_ref(s):
-    return {"id": s.pk, "rollNumber": s.roll_number, "name": s.name, "email": s.email}
+    return {"id": s.pk, "rollNumber": s.roll_number, "name": s.name}
 
 
 @endpoint("GET", auth="admin")
@@ -489,13 +488,13 @@ def _cell(value):
 
 def _export_students(experiment):
     levels = _posttest_levels(experiment)
-    header = ["Roll number", "Name", "Email", "Pretest first", "Pretest best", "Pretest attempts"]
+    header = ["Roll number", "Name", "Pretest first", "Pretest best", "Pretest attempts"]
     for level in levels:
         header += [f"Posttest {level} first", f"Posttest {level} best", f"Posttest {level} attempts"]
     header += ["Simulation runs", "Predictions right %", "Rating", "Last seen"]
     rows = []
-    for r in sorted(_student_rows(experiment), key=lambda r: (r["rollNumber"] is None, r["rollNumber"] or "", r["email"] or "")):
-        row = [r["rollNumber"], r["name"], r["email"]]
+    for r in sorted(_student_rows(experiment), key=lambda r: r["rollNumber"]):
+        row = [r["rollNumber"], r["name"]]
         for key in ["pretest:"] + [f"posttest:{level}" for level in levels]:
             q = r["quizzes"].get(key)
             row += [f"{q['first']['score']}/{q['first']['total']}", f"{q['best']['score']}/{q['best']['total']}", q["attempts"]] if q else ["", "", 0]
@@ -512,9 +511,9 @@ def _posttest_levels(experiment):
 
 
 def _export_attempts(experiment):
-    header = ["Roll number", "Email", "Test", "Level", "Score", "Total", "Percent", "Retake", "Duration (s)", "Submitted"]
+    header = ["Roll number", "Name", "Test", "Level", "Score", "Total", "Percent", "Retake", "Duration (s)", "Submitted"]
     rows = [
-        [a.student.roll_number, a.student.email, a.kind, a.level, a.score, a.total, _pct(a.score, a.total),
+        [a.student.roll_number, a.student.name, a.kind, a.level, a.score, a.total, _pct(a.score, a.total),
          "yes" if a.retake else "no", a.duration_seconds, a.created_at]
         for a in QuizAttempt.objects.filter(experiment=experiment).select_related("student").order_by("created_at", "pk")
     ]
@@ -539,10 +538,10 @@ def _export_answers(experiment):
 
 
 def _export_runs(experiment):
-    header = ["Roll number", "Email", "Lab", "When", "Setup (JSON)", "Prediction (JSON)", "Outcome (JSON)",
+    header = ["Roll number", "Name", "Lab", "When", "Setup (JSON)", "Prediction (JSON)", "Outcome (JSON)",
               "Prediction right", "Steps viewed", "Steps total", "Used Run to end"]
     rows = [
-        [r.student.roll_number, r.student.email, r.lab, r.created_at, json.dumps(r.config), json.dumps(r.prediction),
+        [r.student.roll_number, r.student.name, r.lab, r.created_at, json.dumps(r.config), json.dumps(r.prediction),
          json.dumps(r.outcome), {True: "yes", False: "no", None: ""}[r.prediction_correct], r.steps_viewed,
          r.steps_total, "yes" if r.used_run_to_end else "no"]
         for r in SimulationRun.objects.filter(experiment=experiment).select_related("student").order_by("created_at", "pk")
@@ -551,18 +550,18 @@ def _export_runs(experiment):
 
 
 def _export_feedback(experiment):
-    header = ["Roll number", "Email", "When", "Message"]
+    header = ["Roll number", "Name", "When", "Message"]
     rows = [
-        [f.student.roll_number, f.student.email, f.created_at, f.message]
+        [f.student.roll_number, f.student.name, f.created_at, f.message]
         for f in Feedback.objects.filter(experiment=experiment).select_related("student").order_by("created_at", "pk")
     ]
     return header, rows
 
 
 def _export_bugs(experiment):
-    header = ["Status", "Roll number", "Email", "When", "Page", "Description"]
+    header = ["Status", "Roll number", "Name", "When", "Page", "Description"]
     rows = [
-        [b.status, b.student.roll_number, b.student.email, b.created_at, b.page, b.description]
+        [b.status, b.student.roll_number, b.student.name, b.created_at, b.page, b.description]
         for b in BugReport.objects.filter(experiment=experiment).select_related("student").order_by("created_at", "pk")
     ]
     return header, rows

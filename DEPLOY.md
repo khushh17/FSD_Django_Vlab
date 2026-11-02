@@ -1,5 +1,7 @@
 # Deploying to Vercel
 
+> **Not used for now.** The project runs as a local demo. Keep this for if it is ever deployed.
+
 The site and the backend are two Vercel projects made from the same GitHub repository:
 
 | Vercel project | Root Directory | What it is |
@@ -19,7 +21,6 @@ them only in Vercel's Environment Variables.
 - [ ] The project is on GitHub. Check that `backend/.env`, `.env.local`, `backend/db.sqlite3`
       and `backend/.venv` are **not** in the repository (they are git-ignored).
 - [ ] You have chosen the class password for roll-number sign-in.
-- [ ] Optional: the Google OAuth **Client ID** (see the README's TODOs).
 
 ## 2. Backend project
 
@@ -33,8 +34,6 @@ them only in Vercel's Environment Variables.
    | `DJANGO_DEBUG` | `0` |
    | `DJANGO_SECRET_KEY` | A long random value. Generate one with `python -c "import secrets; print(secrets.token_urlsafe(50))"` |
    | `STUDENT_SHARED_PASSWORD` | The class password students use with their roll number |
-   | `GOOGLE_CLIENT_ID` | The Google OAuth Client ID (optional; leave out to use roll-number sign-in only) |
-   | `ALLOWED_EMAIL_DOMAIN` | `somaiya.edu` |
    | `CORS_ALLOWED_ORIGINS` | The site's address, for example `https://django-vlab.vercel.app` (fill in after step 3; no trailing slash) |
    | `DJANGO_SUPERUSER_USERNAME` | The professor's admin username |
    | `DJANGO_SUPERUSER_EMAIL` | The professor's email |
@@ -60,31 +59,25 @@ them only in Vercel's Environment Variables.
    | Name | Value |
    | --- | --- |
    | `VITE_API_URL` | The backend's address, for example `https://django-vlab-api.vercel.app` (no trailing slash) |
-   | `VITE_GOOGLE_CLIENT_ID` | The same Google OAuth Client ID (optional) |
 
    Do not set `VITE_DEV_LOGIN` here.
 4. **Deploy.**
 
 ## 4. Connect them
 
-1. In the **backend** project, set `CORS_ALLOWED_ORIGINS` to the site's address and
-   **redeploy** the backend (environment variable changes need a new deployment).
-2. Only if you use Google sign-in: in **Google Cloud Console → Credentials → your OAuth client**, add the site's address
-   (for example `https://django-vlab.vercel.app`) to **Authorized JavaScript origins**.
+In the **backend** project, set `CORS_ALLOWED_ORIGINS` to the site's address and
+**redeploy** the backend (environment variable changes need a new deployment).
 
 ## 5. Check it works
 
 - [ ] The site opens. "Sign in to save your results" appears beside the breadcrumb.
-- [ ] Sign in with a roll number and the class password (and, if set up, with a
-      `@somaiya.edu` Google account).
+- [ ] Sign in with a roll number and the class password.
 - [ ] Take the pretest. The result says it is saved to your record.
 - [ ] Open `https://<site address>/#/admin`, sign in as the professor, and find the
       attempt under Students.
 
 If a step fails, look at the backend project's **Logs** in Vercel. Common causes:
-`CORS_ALLOWED_ORIGINS` not matching the site's address exactly, the backend not
-redeployed after changing a variable, or the site's address missing from the Google
-client's authorized origins.
+`CORS_ALLOWED_ORIGINS` not matching the site's address exactly, or the backend not redeployed after changing a variable.
 
 ## Later changes
 

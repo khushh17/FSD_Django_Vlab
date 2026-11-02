@@ -1,4 +1,4 @@
-"""Google sign-in and the API's sign-in tokens."""
+"""Sign-in tokens for students (roll number sign-in) and for the admin."""
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -7,40 +7,6 @@ from django.utils.crypto import constant_time_compare, salted_hmac
 
 TOKEN_SALT = "labs.auth.token"
 ADMIN_TOKEN_SALT = "labs.auth.admin-token"
-
-
-class SignInError(Exception):
-    """The Google credential was rejected. The message is safe to show to the student."""
-
-
-def verify_google_credential(credential):
-    """
-    Check a Google ID token (the `credential` from Google's sign-in button) and return
-    (google_sub, email, name). Raises SignInError if it is invalid or from another domain.
-    """
-    # Imported here so the rest of the app (and the tests) do not need network access.
-    from google.auth.transport import requests as google_requests
-    from google.oauth2 import id_token
-
-    if not settings.GOOGLE_CLIENT_ID:
-        raise SignInError("Google sign-in is not set up on the server yet.")
-    try:
-        # Checks the signature, expiry, issuer and that the token was issued for our client ID.
-        claims = id_token.verify_oauth2_token(credential, google_requests.Request(), settings.GOOGLE_CLIENT_ID)
-    except ValueError as exc:
-        raise SignInError("Google sign-in failed. Please try again.") from exc
-
-    domain = settings.ALLOWED_EMAIL_DOMAIN.lower()
-    email = (claims.get("email") or "").lower()
-    # `hd` is only present for Google Workspace accounts, so a personal Google account that
-    # merely uses a university address is rejected too.
-    if (
-        not claims.get("email_verified")
-        or (claims.get("hd") or "").lower() != domain
-        or not email.endswith("@" + domain)
-    ):
-        raise SignInError(f"Please sign in with your @{domain} account.")
-    return claims["sub"], email, claims.get("name", "")
 
 
 def make_token(student):

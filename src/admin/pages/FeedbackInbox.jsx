@@ -18,7 +18,7 @@ export default function FeedbackInbox() {
     const needle = search.trim().toLowerCase()
     if (!needle) return data.feedback
     return data.feedback.filter((f) =>
-      [f.message, f.student.rollNumber, f.student.name, f.student.email].some((v) => v?.toLowerCase().includes(needle)),
+      [f.message, f.student.rollNumber, f.student.name].some((v) => v?.toLowerCase().includes(needle)),
     )
   }, [data, search])
 
@@ -44,7 +44,7 @@ export default function FeedbackInbox() {
                   <p className={styles.feedbackMeta}>
                     {when(f.createdAt)} ·{' '}
                     <Link to={`/admin/students/${f.student.id}?exp=${experiment.slug}`}>
-                      {f.student.rollNumber ?? f.student.email}
+                      {f.student.rollNumber}
                     </Link>{' '}
                     {f.student.name}
                   </p>

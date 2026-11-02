@@ -18,13 +18,8 @@ export default function AccountBar() {
   return (
     <section className={styles.bar} aria-label="Your account">
       <span className={styles.label}>
-        Signed in: <strong>{student?.rollNumber ?? student?.email}</strong>
+        Signed in: <strong>{student?.rollNumber}</strong>
       </span>
-      {!student?.rollNumber && (
-        <button type="button" className={styles.button} onClick={() => requestSignIn()}>
-          Add roll number
-        </button>
-      )}
       <button type="button" className={styles.button} onClick={signOut}>
         Sign out
       </button>

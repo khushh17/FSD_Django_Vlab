@@ -2,10 +2,7 @@
 JSON API used by the lab site.
 
   POST /api/auth/roll          {roll_number, password, name?} -> {token, student}
-  POST /api/auth/google        {credential}            -> {token, student}
-  POST /api/auth/dev           {email, name}           -> {token, student}   (local testing only)
   GET  /api/me                                         -> {student, ratings}
-  POST /api/me/roll-number     {roll_number}           -> {token, student}  (Google sign-ins)
   POST /api/events             {events: [...]}         -> {results: [...]}   quiz attempts, simulation runs
   POST /api/ratings            {experiment, stars}     -> {stars}
   GET  /api/ratings/summary?experiment=                -> {average, count}   (public)
@@ -35,7 +32,7 @@ from .api import (
     get_str,
     get_uuid,
 )
-from .auth import SignInError, make_token, verify_google_credential
+from .auth import make_token
 from .models import BugReport, Feedback, QuizAnswer, QuizAttempt, Rating, SimulationRun, Student, roll_number_validator
 from .question_keys import keys_for
 
@@ -43,7 +40,7 @@ MAX_EVENTS_PER_BATCH = 50
 
 
 def student_json(student):
-    return {"email": student.email, "name": student.name, "rollNumber": student.roll_number}
+    return {"name": student.name, "rollNumber": student.roll_number}
 
 
 def signed_in(student):
@@ -55,17 +52,6 @@ def get_experiment(data):
 
 
 # ---- sign-in ----
-
-
-@endpoint("POST", auth=False)
-def google_sign_in(request):
-    rate_limit(f"google:{client_ip(request)}", 30, 15 * 60)
-    credential = get_str(request.data, "credential", min_length=1, max_length=5000)
-    try:
-        sub, email, name = verify_google_credential(credential)
-    except SignInError as err:
-        raise ApiError(403, "sign_in_rejected", str(err)) from err
-    return signed_in(_upsert_student(sub, email, name))
 
 
 @endpoint("POST", auth=False)
@@ -99,47 +85,6 @@ def _clean_roll(data):
     return roll
 
 
-@endpoint("POST", auth=False)
-def dev_sign_in(request):
-    if not settings.DEV_LOGIN:
-        raise ApiError(404, "not_found", "Not found.")
-    email = get_str(request.data, "email", min_length=3, max_length=254).lower()
-    if "@" not in email:
-        raise bad("'email' must be an email address.")
-    name = get_str(request.data, "name", max_length=200, required=False)
-    return signed_in(_upsert_student(f"dev:{email}", email, name))
-
-
-def _join_google_account(google_student, roll_student):
-    """Move the Google account (and anything recorded under it) onto the roll-number student."""
-    for model in (QuizAttempt, SimulationRun, Feedback, BugReport):
-        model.objects.filter(student=google_student).update(student=roll_student)
-    for rating in Rating.objects.filter(student=google_student):
-        if not Rating.objects.filter(student=roll_student, experiment=rating.experiment).exists():
-            rating.student = roll_student
-            rating.save(update_fields=["student"])
-    sub, email, name = google_student.google_sub, google_student.email, google_student.name
-    google_student.delete()  # frees the unique Google ID and email
-    roll_student.google_sub, roll_student.email = sub, email
-    roll_student.name = roll_student.name or name
-    roll_student.save(update_fields=["google_sub", "email", "name"])
-    return roll_student
-
-
-def _upsert_student(sub, email, name):
-    """Find the student by Google account ID; keep their email and name up to date."""
-    with transaction.atomic():
-        student = Student.objects.select_for_update().filter(google_sub=sub).first()
-        if student is None:
-            student = Student(google_sub=sub)
-        student.email, student.name = email, name
-        try:
-            student.save()
-        except IntegrityError as exc:  # the email belongs to another Google account ID
-            raise ApiError(409, "email_in_use", "This email is linked to another account. Ask the admin.") from exc
-    return student
-
-
 # ---- the signed-in student ----
 
 
@@ -147,28 +92,6 @@ def _upsert_student(sub, email, name):
 def me(request):
     ratings = dict(request.student.ratings.values_list("experiment", "stars"))
     return JsonResponse({"student": student_json(request.student), "ratings": ratings})
-
-
-@endpoint("POST")
-def set_roll_number(request):
-    student = request.student
-    if student.roll_number:
-        # Changing it would let a student move their results to someone else.
-        raise ApiError(409, "roll_number_set", "Your roll number is already saved. Ask the admin to change it.")
-    roll = _clean_roll(request.data)
-    with transaction.atomic():
-        existing = Student.objects.select_for_update().filter(roll_number=roll).first()
-        if existing is None:
-            student.roll_number = roll
-            student.save(update_fields=["roll_number"])
-        elif existing.google_sub is None and student.google_sub:
-            # This roll number signed in with the class password before: join this Google
-            # account to that student, so both sign-ins reach the same records.
-            student = _join_google_account(student, existing)
-        else:
-            raise ApiError(409, "roll_number_taken", "This roll number is already used by another account. Ask the admin.")
-    # The student may now be a different record (after joining): send a new token.
-    return signed_in(student)
 
 
 # ---- events sent in the background (quiz attempts, simulation runs) ----

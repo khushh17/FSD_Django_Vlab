@@ -5,8 +5,8 @@ Fill the local database with made-up demo students, so the admin pages can be tr
     python manage.py seed_demo --clear    # remove all demo data
 
 Only runs with DJANGO_DEBUG=1. Demo students have roll numbers 16099999001 onwards
-(branch 999, which no real branch uses), Google IDs starting demo: and emails
-demo.student.N@... so they are easy to tell apart and remove. If DEV_ADMIN_USERNAME and
+(branch 999, which no real branch uses), so they are easy to tell apart and remove.
+If DEV_ADMIN_USERNAME and
 DEV_ADMIN_PASSWORD are set in backend/.env, a superuser with those details is created
 for signing in to the admin pages locally.
 """
@@ -23,7 +23,6 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
-from django.db.models import Q
 from django.utils import timezone
 
 from labs.models import BugReport, Feedback, QuizAnswer, QuizAttempt, Rating, SimulationRun, Student
@@ -60,8 +59,7 @@ class Command(BaseCommand):
     def handle(self, *args, clear=False, **options):
         if not settings.DEBUG:
             raise CommandError("seed_demo only runs with DJANGO_DEBUG=1.")
-        # Old demo rows used roll numbers DEMO001...; current ones have Google IDs demo:N.
-        deleted, _ = Student.objects.filter(Q(google_sub__startswith="demo:") | Q(roll_number__startswith="DEMO")).delete()
+        deleted, _ = Student.objects.filter(roll_number__startswith=DEMO_ROLL).delete()
         if clear:
             self.stdout.write(f"Removed the demo data ({deleted} rows).")
             return
@@ -117,7 +115,6 @@ class Command(BaseCommand):
         for n in range(1, STUDENTS + 1):
             start = now - timedelta(days=rnd.uniform(0, 20), hours=rnd.uniform(0, 8))
             s = Student.objects.create(
-                google_sub=f"demo:{n}", email=f"demo.student.{n}@{settings.ALLOWED_EMAIL_DOMAIN}",
                 name=f"Demo Student {n}", roll_number=f"{DEMO_ROLL}{n:03}", last_seen_at=start + timedelta(hours=2),
             )
             skill = rnd.uniform(0.3, 0.8)
@@ -151,7 +148,7 @@ class Command(BaseCommand):
             if rnd.random() < 0.6:
                 Rating.objects.create(student=s, experiment=EXPERIMENT, stars=rnd.choice([3, 4, 4, 5, 5]))
 
-        demo = list(Student.objects.filter(google_sub__startswith="demo:").order_by("roll_number"))
+        demo = list(Student.objects.filter(roll_number__startswith=DEMO_ROLL).order_by("roll_number"))
         for s, text in zip(demo[:3], [
             "Demo feedback: the step-by-step log made the middleware order clear.",
             "Demo feedback: the URL lab was confusing at first; an example walkthrough would help.",

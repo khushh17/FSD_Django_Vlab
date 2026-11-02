@@ -24,8 +24,8 @@ export default function Students() {
     const needle = search.trim().toLowerCase()
     return data.students
       .filter((s) => !onlyActive || Object.keys(s.quizzes).length > 0 || s.simulationRuns > 0)
-      .filter((s) => !needle || [s.rollNumber, s.name, s.email].some((v) => v?.toLowerCase().includes(needle)))
-      .sort((a, b) => (a.rollNumber ?? '￿').localeCompare(b.rollNumber ?? '￿') || (a.email ?? '').localeCompare(b.email ?? ''))
+      .filter((s) => !needle || [s.rollNumber, s.name].some((v) => v?.toLowerCase().includes(needle)))
+      .sort((a, b) => a.rollNumber.localeCompare(b.rollNumber))
   }, [data, search, onlyActive])
 
   return (
@@ -36,7 +36,7 @@ export default function Students() {
         <>
           <div className={styles.filters}>
             <label className={styles.field} htmlFor={searchId}>
-              Search by roll number, name or email
+              Search by roll number or name
               <input id={searchId} type="search" value={search} onChange={(e) => setSearch(e.target.value)} />
             </label>
             <label className={styles.check}>
@@ -67,12 +67,9 @@ export default function Students() {
               {rows.map((s) => (
                 <tr key={s.id}>
                   <th scope="row">
-                    <Link to={`/admin/students/${s.id}?exp=${experiment.slug}`}>{s.rollNumber ?? '(none yet)'}</Link>
+                    <Link to={`/admin/students/${s.id}?exp=${experiment.slug}`}>{s.rollNumber}</Link>
                   </th>
-                  <td>
-                    {s.name || '—'}
-                    {s.email && <span className={styles.cellNote}>{s.email}</span>}
-                  </td>
+                  <td>{s.name || '—'}</td>
                   {quizColumns.map((c) => {
                     const q = s.quizzes[c.key]
                     return (
