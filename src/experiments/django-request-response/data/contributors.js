@@ -1,5 +1,5 @@
-// Developers shown on the Contributors tab (four students).
-// TODO: fill in each developer's name, email and ID. Empty fields are shown as "TODO" on the page.
+// People shown on the Contributors tab. Fields left empty ('') are shown as "—"; a column
+// (Email, ID) is shown only when at least one person in that table has a value for it.
 // Do not add anyone who has not been confirmed.
 const INSTITUTE = 'Somaiya Vidyavihar University'
 
@@ -10,5 +10,4 @@ export const developers = [
   { name: 'Zishaan Shaikh', email: 'zishan.shaikh@somaiya.edu', institute: INSTITUTE, id: '' },
 ]
 
-// TODO: Subject Matter Experts table (same columns), once confirmed.
-export const subjectMatterExperts = ['Mrs. Kirti Mishra']
+export const subjectMatterExperts = [{ name: 'Mrs. Kirti Mishra', email: '', institute: INSTITUTE, id: '' }]

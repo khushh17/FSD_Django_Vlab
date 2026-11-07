@@ -1,7 +1,7 @@
 import { useAuth } from './authContext.js'
 import styles from './AccountBar.module.css'
 
-/** Sign-in status beside the breadcrumb. Hidden when no backend is configured. */
+/** Sign-in status above the content. Hidden when no backend is configured. */
 export default function AccountBar() {
   const { status, student, requestSignIn, signOut } = useAuth()
   if (status === 'disabled') return null

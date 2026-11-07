@@ -2,14 +2,6 @@ export const meta = {
   slug: 'django-request-response',
   title: 'Django Request–Response Cycle',
 
-  // Breadcrumb trail above the experiment's own entry. `href: null` renders plain text.
-  breadcrumb: [
-    { label: 'Computer Science and Engineering', href: null }, // TODO: domain URL
-    { label: 'Python', href: null }, // TODO: lab URL
-    { label: 'Django', href: null }, // TODO: Django lab/section URL
-  ],
-  breadcrumbLabel: 'Request–Response Cycle',
-
   // Rate Me opens a popup. With a backend the rating is saved for the signed-in student;
   // without one it is kept on the page only.
   // Optional external Report a Bug URL. When null and a backend is set, the built-in form is used.

@@ -27,12 +27,12 @@
   flex-direction: column;
 }
 
-/* Breadcrumb on the left, sign-in status on the right (below it on narrow screens) */
+/* Sign-in status, right-aligned above the content (also spaces the title from the header) */
 .topRow {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
+  min-height: 24px;
+  padding: 16px 0;
 }
 
 .row {

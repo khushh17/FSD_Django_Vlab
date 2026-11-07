@@ -425,15 +425,15 @@ export default function Theory() {
       <MiddlewareOnion />
       <Figure
         src="middleware-onion.png"
-        alt="Middleware drawn as layers around the view, with the request entering and the response leaving"
-        caption="Figure 2. The middleware onion."
+        alt="Concentric rings labelled CommonMiddleware, SessionMiddleware, AuthenticationMiddleware and XViewMiddleware around a central View, with an arrow passing through every ring into the view and out the other side"
+        caption="Figure 2. The middleware onion: the request passes through every layer on its way to the view, and the response passes back out through them."
         credit={null} // TODO: source of middleware-onion.png
         creditUrl={null}
       />
       <Figure
         src="middleware-hooks-flow.png"
-        alt="The order in which __call__, process_view, process_exception and process_template_response run"
-        caption="Figure 3. Middleware hooks in the order Django calls them."
+        alt="An HttpRequest arrow goes down from the web server through SecurityMiddleware, SessionMiddleware and CommonMiddleware to view processing; an HttpResponse arrow goes back up from view processing to the web server"
+        caption="Figure 3. The request passes the middleware from top to bottom on its way to the view; the response passes them from bottom to top."
         credit={null} // TODO: source of middleware-hooks-flow.png
         creditUrl={null}
       />
@@ -505,8 +505,8 @@ export default function Theory() {
       <UrlMatcher />
       <Figure
         src="url-resolution.png"
-        alt="The URL resolver testing patterns in order until one matches"
-        caption="Figure 4. URL resolution."
+        alt="A cycle: the user sends a request to a URL, the URL dispatcher passes it to a view that processes data, the view renders a template, and the HTTP response goes back to the user"
+        caption="Figure 4. Where URL resolution fits: the URL dispatcher chooses the view, which builds the response, often by rendering a template."
         credit={null} // TODO: source of url-resolution.png
         creditUrl={null}
       />

@@ -6,7 +6,8 @@ import styles from './Figure.module.css'
  * if the file is missing, a dashed placeholder shows the expected filename.
  *
  * src: filename in public/diagrams/   alt: description of the image
- * caption: figure caption              credit: source text   creditUrl: source link
+ * caption: figure caption              credit: source text (the Source line is left out when null)
+ * creditUrl: source link
  */
 export default function Figure({ src, alt, caption, credit, creditUrl }) {
   const [missing, setMissing] = useState(false)
@@ -24,16 +25,18 @@ export default function Figure({ src, alt, caption, credit, creditUrl }) {
       )}
       <figcaption className={styles.caption}>
         {caption}
-        <span className={styles.credit}>
-          Source:{' '}
-          {credit && creditUrl ? (
-            <a href={creditUrl} target="_blank" rel="noopener noreferrer">
-              {credit}
-            </a>
-          ) : (
-            credit || 'TODO'
-          )}
-        </span>
+        {credit && (
+          <span className={styles.credit}>
+            Source:{' '}
+            {creditUrl ? (
+              <a href={creditUrl} target="_blank" rel="noopener noreferrer">
+                {credit}
+              </a>
+            ) : (
+              credit
+            )}
+          </span>
+        )}
       </figcaption>
     </figure>
   )

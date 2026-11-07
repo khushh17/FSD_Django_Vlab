@@ -11,7 +11,6 @@ import Header from './Header.jsx'
 import MenuDrawer from './MenuDrawer.jsx'
 import RateModal from './RateModal.jsx'
 import Sidebar from './Sidebar.jsx'
-import SubHeader from './SubHeader.jsx'
 import TabPager from './TabPager.jsx'
 import styles from './ExperimentLayout.module.css'
 
@@ -129,12 +128,6 @@ export default function ExperimentLayout({ meta, basePath }) {
     mainRef.current?.focus()
   }
 
-  const breadcrumb = [
-    ...meta.breadcrumb,
-    { label: meta.breadcrumbLabel, to: `${basePath}/${meta.tabs[0].slug}` },
-    ...(currentTab ? [{ label: currentTab.label }] : []),
-  ]
-
   return (
     <div className={styles.page}>
       <a href="#main-content" className={styles.skip} onClick={skipToContent}>
@@ -188,7 +181,6 @@ export default function ExperimentLayout({ meta, basePath }) {
 
       <div className={styles.body}>
         <div className={styles.topRow}>
-          <SubHeader items={breadcrumb} />
           <AccountBar />
         </div>
         <div className={styles.row}>
