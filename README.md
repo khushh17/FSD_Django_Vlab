@@ -22,8 +22,8 @@ npm run deploy     # build, then publish dist/ to the gh-pages branch
 
 ## Deploying
 
-For now the project is a **local demo**: it is not deployed anywhere. If it is deployed
-later, [DEPLOY.md](DEPLOY.md) describes Vercel (site and backend). The steps below put the
+The project is **ready to deploy but not deployed yet**. [DEPLOY.md](DEPLOY.md) has the
+steps for Vercel (site and backend, with a free Neon Postgres database). The steps below put the
 site alone on GitHub Pages; that works only without the backend (no sign-in, no records),
 because GitHub Pages cannot run Django.
 
@@ -284,7 +284,7 @@ items marked in it.
 
 | Item | Notes |
 | --- | --- |
-| Deploying (not planned for now) | [DEPLOY.md](DEPLOY.md) |
+| Deploy to Vercel when ready | [DEPLOY.md](DEPLOY.md) |
 | Landing page listing every experiment; merge other students' experiments | `src/experiments/registry.js`, `LAB_EXPERIMENTS` in `backend/config/settings.py` |
 | A shared store (for example Redis) for rate limits, if they ever need to be strict | See Known limits |
 | Students list currently shows every signed-in student, also those from other experiments | Filter by class or experiment once there are several |

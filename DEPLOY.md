@@ -1,6 +1,6 @@
 # Deploying to Vercel
 
-> **Not used for now.** The project runs as a local demo. Keep this for if it is ever deployed.
+> **Ready to deploy, not deployed yet.** Follow these steps when you decide to put it online.
 
 The site and the backend are two Vercel projects made from the same GitHub repository:
 
@@ -20,7 +20,10 @@ them only in Vercel's Environment Variables.
 
 - [ ] The project is on GitHub. Check that `backend/.env`, `.env.local`, `backend/db.sqlite3`
       and `backend/.venv` are **not** in the repository (they are git-ignored).
-- [ ] You have chosen the class password for roll-number sign-in.
+- [ ] The production values: a secret key, the class password and the admin account. On
+      the computer that prepared the deployment they are in `production-secrets.local` at
+      the project root (git-ignored, never uploaded). Otherwise make your own: random values
+      from `python -c "import secrets; print(secrets.token_urlsafe(50))"`.
 
 ## 2. Backend project
 
@@ -32,7 +35,7 @@ them only in Vercel's Environment Variables.
    | Name | Value |
    | --- | --- |
    | `DJANGO_DEBUG` | `0` |
-   | `DJANGO_SECRET_KEY` | A long random value. Generate one with `python -c "import secrets; print(secrets.token_urlsafe(50))"` |
+   | `DJANGO_SECRET_KEY` | A long random value (from `production-secrets.local`) |
    | `STUDENT_SHARED_PASSWORD` | The class password students use with their roll number |
    | `CORS_ALLOWED_ORIGINS` | The site's address, for example `https://django-vlab.vercel.app` (fill in after step 3; no trailing slash) |
    | `DJANGO_SUPERUSER_USERNAME` | The professor's admin username |
@@ -60,7 +63,6 @@ them only in Vercel's Environment Variables.
    | --- | --- |
    | `VITE_API_URL` | The backend's address, for example `https://django-vlab-api.vercel.app` (no trailing slash) |
 
-   Do not set `VITE_DEV_LOGIN` here.
 4. **Deploy.**
 
 ## 4. Connect them

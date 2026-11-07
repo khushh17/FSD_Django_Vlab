@@ -1,0 +1,10 @@
+# Files the site deployment (repository root) does not need to upload. Nothing here is
+# needed by the backend project either (Root Directory: backend; see backend/.vercelignore).
+references/
+scripts/sim-check/
+dist/
+node_modules/
+.env
+.env.*
+!.env.example
+*.local
